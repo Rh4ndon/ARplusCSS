@@ -1,0 +1,63 @@
+{
+  "expo": {
+    "name": "ARplusCSS",
+    "slug": "arpluscss",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "scheme": "arpluscss",
+    "splash": {
+      "image": "./assets/logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0047AB"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.arpluscss.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "ARplusCSS uses the camera to scan your motherboard reference image and show interactive AR guides."
+      }
+    },
+    "android": {
+      "package": "com.arpluscss.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0047AB"
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.INTERNET"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 24,
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36
+          },
+          "ios": {
+            "deploymentTarget": "15.1"
+          }
+        }
+      ],
+      [
+        "@reactvision/react-viro",
+        {
+          "android": {
+            "xRMode": "AR"
+          },
+          "ios": {
+            "cameraUsagePermission": "ARplusCSS needs the camera for augmented reality motherboard lessons.",
+            "microphoneUsagePermission": "ARplusCSS does not record audio; this permission is unused."
+          }
+        }
+      ]
+    ]
+  }
+}
