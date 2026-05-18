@@ -23,12 +23,7 @@ const TAGLINE_LINES = [
 export function SplashScreen({ navigation }) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-
-  // Side-by-side on wider screens; stack only if the phone is very narrow.
-  const stackVertically = width < 380;
-  const logoSize = stackVertically
-    ? Math.min(width * 0.72, 300)
-    : Math.min(width * 0.46, 240);
+  const logoSize = Math.min(width * 0.72, 300);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -56,12 +51,7 @@ export function SplashScreen({ navigation }) {
           },
         ]}
       >
-        <View
-          style={[
-            styles.centerBlock,
-            stackVertically ? styles.centerBlockStacked : styles.centerBlockRow,
-          ]}
-        >
+        <View style={styles.centerBlock}>
           <Image
             source={require('../../assets/logo.png')}
             style={[
@@ -77,13 +67,7 @@ export function SplashScreen({ navigation }) {
 
           <View style={styles.textSection}>
             {TAGLINE_LINES.map((line) => (
-              <Text
-                key={line}
-                style={[
-                  styles.tagline,
-                  stackVertically ? styles.taglineCenter : styles.taglineLeft,
-                ]}
-              >
+              <Text key={line} style={styles.tagline}>
                 {line}
               </Text>
             ))}
@@ -106,27 +90,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   centerBlock: {
+    flexDirection: 'column',
     alignItems: 'center',
+    justifyContent: 'center',
     maxWidth: '100%',
-  },
-  centerBlockRow: {
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 20,
-  },
-  centerBlockStacked: {
-    flexDirection: 'column',
-    justifyContent: 'center',
-    gap: 20,
+    gap: 24,
   },
   logo: {
     flexShrink: 0,
   },
   textSection: {
-    flexShrink: 1,
-    justifyContent: 'center',
-    maxWidth: 220,
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 8,
   },
   tagline: {
     color: '#ffffff',
@@ -134,11 +110,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.35,
     lineHeight: 19,
-  },
-  taglineLeft: {
-    textAlign: 'left',
-  },
-  taglineCenter: {
     textAlign: 'center',
   },
 });
