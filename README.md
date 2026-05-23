@@ -27,6 +27,8 @@ npm install
 python3 scripts/generate_assets.py   # creates marker + icons if missing
 npx expo prebuild --platform android
 npx expo run:android
+OR
+npx expo run:android --device
 ```
 
 ## Using the AR lesson

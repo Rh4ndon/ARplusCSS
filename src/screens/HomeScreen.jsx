@@ -8,14 +8,19 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const HOME_BLUE_TOP = '#0c2d5c';
-const HOME_BLUE_MID = '#081f42';
-const HOME_BLUE_BOTTOM = '#040d1f';
-const LIME = '#9ae600';
-const LIME_DARK = '#7bc700';
+// ── OptionScreen-aligned palette ─────────────────────────────────────────────
+const C = {
+  background:  '#dde8f8',   // light blue page bg
+  navy:        '#0c2d6b',   // primary navy
+  navyLight:   '#1a4a9c',   // section line / accents
+  accent:      '#1d4ed8',   // blue accent
+  border:      '#b8d0ef',   // soft blue border
+  text:        '#0c2d6b',   // primary text
+  textMuted:   '#374e7a',   // body text
+  white:       '#ffffff',
+};
 
 function SectionHeading({ title }) {
   return (
@@ -39,13 +44,6 @@ export function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.fill}>
-      <LinearGradient
-        colors={[HOME_BLUE_TOP, HOME_BLUE_MID, HOME_BLUE_BOTTOM]}
-        locations={[0, 0.45, 1]}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={styles.circuitOverlay} pointerEvents="none" />
-
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[
@@ -57,7 +55,8 @@ export function HomeScreen({ navigation }) {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
+        {/* Logo header — navy background like OptionScreen header */}
+        <View style={[styles.header, { width: width }]}>
           <Image
             source={require('../../assets/logo.png')}
             style={[styles.logo, { width: logoWidth, height: logoWidth * 0.72 }]}
@@ -86,6 +85,7 @@ export function HomeScreen({ navigation }) {
           />
         </View>
 
+        {/* CTA button — same navy pill style as OptionScreen menu cards */}
         <Pressable
           style={({ pressed }) => [
             styles.ctaButton,
@@ -93,15 +93,10 @@ export function HomeScreen({ navigation }) {
           ]}
           onPress={() => navigation.navigate('Options')}
         >
-          <LinearGradient
-            colors={[LIME, LIME_DARK]}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-            style={styles.ctaGradient}
-          >
+          <View style={styles.ctaInner}>
             <Text style={styles.ctaText}>GET STARTED</Text>
             <Text style={styles.ctaArrow}>→</Text>
-          </LinearGradient>
+          </View>
         </Pressable>
       </ScrollView>
     </View>
@@ -111,13 +106,7 @@ export function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   fill: {
     flex: 1,
-    backgroundColor: HOME_BLUE_BOTTOM,
-  },
-  circuitOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.12,
-    borderWidth: 1,
-    borderColor: 'rgba(96, 165, 250, 0.15)',
+    backgroundColor: C.background,
   },
   scroll: {
     flex: 1,
@@ -126,13 +115,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
   },
+
+  // ── Header (navy bar matching OptionScreen) ──────────────
   header: {
     alignItems: 'center',
+    backgroundColor: C.navy,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginHorizontal: -20,    // bleed to edges
     marginBottom: 8,
   },
   logo: {
     marginBottom: 4,
   },
+
+  // ── Section heading ──────────────────────────────────────
   sectionHeadingRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -143,15 +140,15 @@ const styles = StyleSheet.create({
   },
   sectionLine: {
     flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(59, 130, 246, 0.55)',
+    height: 1.5,
+    backgroundColor: C.border,
     justifyContent: 'center',
   },
   sectionDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#60a5fa',
+    backgroundColor: C.accent,
     position: 'absolute',
     left: 0,
   },
@@ -160,14 +157,16 @@ const styles = StyleSheet.create({
     right: 0,
   },
   sectionHeading: {
-    color: '#ffffff',
+    color: C.navy,
     fontSize: 16,
     fontWeight: '800',
     letterSpacing: 0.3,
     flexShrink: 0,
   },
+
+  // ── Body text ────────────────────────────────────────────
   bodyText: {
-    color: 'rgba(241, 245, 249, 0.92)',
+    color: C.textMuted,
     fontSize: 14,
     lineHeight: 22,
     textAlign: 'center',
@@ -176,6 +175,8 @@ const styles = StyleSheet.create({
   bodyTextGap: {
     marginTop: 14,
   },
+
+  // ── Hero image ───────────────────────────────────────────
   heroWrap: {
     marginTop: 22,
     marginBottom: 28,
@@ -184,38 +185,41 @@ const styles = StyleSheet.create({
   heroImage: {
     maxWidth: '100%',
   },
+
+  // ── CTA button (navy pill matching OptionScreen cards) ───
   ctaButton: {
-    width: '100%',
+    width: '90%',
     maxWidth: 340,
-    borderRadius: 14,
+    borderRadius: 50,
     overflow: 'hidden',
-    shadowColor: '#000',
+    shadowColor: C.navy,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
     elevation: 6,
   },
   ctaButtonPressed: {
-    opacity: 0.92,
+    opacity: 0.88,
     transform: [{ scale: 0.98 }],
   },
-  ctaGradient: {
+  ctaInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
+    backgroundColor: C.navy,
+    paddingVertical: 18,
     paddingHorizontal: 24,
     gap: 8,
   },
   ctaText: {
-    color: '#1a2332',
-    fontSize: 17,
+    color: C.white,
+    fontSize: 20,
     fontWeight: '900',
     letterSpacing: 1.2,
   },
   ctaArrow: {
-    color: '#1a2332',
-    fontSize: 20,
+    color: C.white,
+    fontSize: 22,
     fontWeight: '800',
     marginTop: -2,
   },
