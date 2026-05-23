@@ -9,19 +9,19 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { OptionCard } from '../components/OptionCard';
 
-function WelcomeCard() {
+function MenuCard({ imageSource, label, onPress }) {
   return (
-    <View style={styles.welcomeCard}>
-      <View style={styles.welcomeIconWrap}>
-        <Text style={styles.welcomeIcon}>👋</Text>
+    <Pressable style={styles.menuCard} onPress={onPress} android_ripple={{ color: 'rgba(0,0,0,0.08)' }}>
+      <Image
+        source={imageSource}
+        style={styles.menuCardImage}
+        resizeMode="contain"
+      />
+      <View style={styles.menuCardBtn}>
+        <Text style={styles.menuCardLabel}>{label}</Text>
       </View>
-      <Text style={styles.welcomeText}>
-        Welcome, Learner! Explore interactive AR lessons and develop your Computer
-        System Servicing skills.
-      </Text>
-    </View>
+    </Pressable>
   );
 }
 
@@ -30,11 +30,7 @@ export function OptionScreen({ navigation }) {
 
   return (
     <View style={styles.fill}>
-      <LinearGradient
-        colors={['#0c2d5c', '#081f42', '#040d1f']}
-        style={StyleSheet.absoluteFill}
-      />
-
+      {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <Image
           source={require('../../assets/logo.png')}
@@ -44,44 +40,35 @@ export function OptionScreen({ navigation }) {
         />
       </View>
 
+      {/* Content */}
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: insets.bottom + 72 },
+          { paddingBottom: insets.bottom + 80 },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <WelcomeCard />
-
-        <OptionCard
-          colors={['#2563eb', '#1d4ed8']}
+        <MenuCard
           imageSource={require('../../assets/images/option-hardware.png')}
-          icon="🖥️"
-          title="Hardware Components"
-          subtitle="Explore and identify computer hardware using AR 3D models."
+          label="HARDWARE COMPONENTS"
           onPress={() => navigation.navigate('AR')}
         />
 
-        <OptionCard
-          colors={['#16a34a', '#15803d']}
+        <MenuCard
           imageSource={require('../../assets/images/option-network.png')}
-          icon="🌐"
-          title="Network Cabling"
-          subtitle="Learn network cabling procedures step-by-step with AR guidance."
+          label="NETWORK CABLING"
           onPress={() => navigation.navigate('NetworkCablingSetup')}
         />
 
-        <OptionCard
-          colors={['#7c3aed', '#6d28d9']}
+        <MenuCard
           imageSource={require('../../assets/images/option-help.png')}
-          icon="❓"
-          title="Help / Guide"
-          subtitle="How to use the app, scan markers, and other helpful tips."
+          label="HELP/GUIDE"
           onPress={() => navigation.navigate('HelpGuide')}
         />
       </ScrollView>
 
+      {/* Footer */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + 10 }]}>
         <Text style={styles.footerBulb}>💡</Text>
         <Text style={styles.footerText}>
@@ -103,56 +90,70 @@ export function OptionScreen({ navigation }) {
 const styles = StyleSheet.create({
   fill: {
     flex: 1,
-    backgroundColor: '#040d1f',
+    backgroundColor: '#e8f0fc',
   },
+
+  // ── Header ──────────────────────────────────────────────
   header: {
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingBottom: 8,
-    backgroundColor: 'rgba(8, 31, 66, 0.95)',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(59, 130, 246, 0.2)',
+    paddingBottom: 12,
+    backgroundColor: '#0c2d6b',
+    borderBottomWidth: 0,
   },
   headerLogo: {
     width: '100%',
-    maxWidth: 280,
-    height: 88,
+    maxWidth: 240,
+    height: 80,
   },
+
+  // ── Scroll ───────────────────────────────────────────────
   scroll: {
     flex: 1,
+    backgroundColor: '#dde8f8',
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
-  welcomeCard: {
-    flexDirection: 'row',
+    paddingHorizontal: 24,
+    paddingTop: 28,
     alignItems: 'center',
-    backgroundColor: 'rgba(15, 40, 80, 0.9)',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 18,
-    gap: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.25)',
+    gap: 32,
   },
-  welcomeIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+
+  // ── Menu Card ────────────────────────────────────────────
+  menuCard: {
+    width: '100%',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 10,
   },
-  welcomeIcon: {
-    fontSize: 26,
+  menuCardImage: {
+    width: 140,
+    height: 120,
+    marginBottom: -8,
+    zIndex: 1,
   },
-  welcomeText: {
-    flex: 1,
-    color: 'rgba(241, 245, 249, 0.95)',
-    fontSize: 13,
-    lineHeight: 19,
+  menuCardBtn: {
+    backgroundColor: '#0c2d6b',
+    borderRadius: 50,
+    paddingVertical: 18,
+    paddingHorizontal: 32,
+    width: '90%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 6,
   },
+  menuCardLabel: {
+    color: '#ffffff',
+    fontSize: 20,
+    fontWeight: '800',
+    textAlign: 'center',
+    letterSpacing: 1.2,
+    lineHeight: 26,
+  },
+
+  // ── Footer ───────────────────────────────────────────────
   footer: {
     position: 'absolute',
     left: 0,
@@ -163,16 +164,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 10,
     gap: 8,
-    backgroundColor: 'rgba(4, 13, 31, 0.96)',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(51, 65, 85, 0.6)',
+    backgroundColor: '#0c2d6b',
+    borderTopWidth: 0,
   },
   footerBulb: {
     fontSize: 18,
   },
   footerText: {
     flex: 1,
-    color: 'rgba(148, 163, 184, 0.95)',
+    color: 'rgba(200, 220, 255, 0.9)',
     fontSize: 10,
     lineHeight: 14,
   },

@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const SPLASH_BLUE = '#0047AB';
 const SPLASH_BLUE_LIGHT = '#1a5fc4';
-const SPLASH_BLUE_DARK = '#002d6e';
+const SPLASH_BLUE_DARK = '#0c2d6b';
 
 const TAGLINE_LINES = [
   'AUGMENTED REALITY–BASED',

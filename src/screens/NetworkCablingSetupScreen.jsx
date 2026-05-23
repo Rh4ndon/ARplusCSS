@@ -6,19 +6,26 @@ import {
   Text,
   View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { cablingOverview } from '../data/cablingGuides';
+
+// ── OptionScreen-aligned palette ─────────────────────────────────────────────
+const C = {
+  background:  '#dde8f8',
+  surface:     '#ffffff',
+  navy:        '#0c2d6b',
+  navyLight:   '#1a4a9c',
+  border:      '#b8d0ef',
+  text:        '#0c2d6b',
+  textMuted:   '#374e7a',
+  white:       '#ffffff',
+};
 
 export function NetworkCablingSetupScreen({ navigation }) {
   const insets = useSafeAreaInsets();
 
   return (
     <View style={styles.fill}>
-      <LinearGradient
-        colors={['#0c2d5c', '#081f42', '#040d1f']}
-        style={StyleSheet.absoluteFill}
-      />
       <ScrollView
         contentContainerStyle={[
           styles.content,
@@ -35,32 +42,26 @@ export function NetworkCablingSetupScreen({ navigation }) {
           style={({ pressed }) => [styles.choiceCard, pressed && styles.choicePressed]}
           onPress={() => navigation.navigate('ARNetwork', { wiringType: 'straight' })}
         >
-          <LinearGradient
-            colors={['#16a34a', '#15803d']}
-            style={styles.choiceGradient}
-          >
+          <View style={styles.choiceInner}>
             <Text style={styles.choiceTitle}>Straight-Through</Text>
             <Text style={styles.choiceBody}>{cablingOverview.straight.body}</Text>
             <Text style={styles.choiceCta}>Start AR lesson →</Text>
-          </LinearGradient>
+          </View>
         </Pressable>
 
         <Pressable
           style={({ pressed }) => [styles.choiceCard, pressed && styles.choicePressed]}
           onPress={() => navigation.navigate('ARNetwork', { wiringType: 'crossover' })}
         >
-          <LinearGradient
-            colors={['#059669', '#047857']}
-            style={styles.choiceGradient}
-          >
+          <View style={styles.choiceInner}>
             <Text style={styles.choiceTitle}>Crossover</Text>
             <Text style={styles.choiceBody}>{cablingOverview.crossover.body}</Text>
             <Text style={styles.choiceCta}>Start AR lesson →</Text>
-          </LinearGradient>
+          </View>
         </Pressable>
 
         <View style={styles.tipBox}>
-          <Text style={styles.tipTitle}>Marker tip</Text>
+          <Text style={styles.tipTitle}>💡 Marker tip</Text>
           <Text style={styles.tipBody}>
             Print{' '}
             <Text style={styles.mono}>assets/images/rj45-marker.jpg</Text> at about
@@ -73,66 +74,93 @@ export function NetworkCablingSetupScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1, backgroundColor: '#040d1f' },
-  content: { paddingHorizontal: 20 },
+  fill: {
+    flex: 1,
+    backgroundColor: C.background,
+  },
+  content: {
+    paddingHorizontal: 20,
+  },
+
+  // ── Heading ──────────────────────────────────────────────
   heading: {
-    color: '#f1f5f9',
+    color: C.navy,
     fontSize: 26,
     fontWeight: '800',
     marginBottom: 8,
   },
   lead: {
-    color: '#94a3b8',
+    color: C.textMuted,
     fontSize: 14,
     lineHeight: 21,
     marginBottom: 22,
   },
+
+  // ── Choice cards (navy pill style like OptionScreen) ─────
   choiceCard: {
-    borderRadius: 16,
+    borderRadius: 50,
     overflow: 'hidden',
-    marginBottom: 14,
+    marginBottom: 16,
+    shadowColor: C.navy,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 6,
   },
-  choicePressed: { opacity: 0.92 },
-  choiceGradient: {
-    padding: 18,
+  choicePressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.98 }],
+  },
+  choiceInner: {
+    backgroundColor: C.navy,
+    paddingVertical: 20,
+    paddingHorizontal: 28,
+    alignItems: 'center',
   },
   choiceTitle: {
-    color: '#ffffff',
+    color: C.white,
     fontSize: 20,
     fontWeight: '800',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
     marginBottom: 8,
   },
   choiceBody: {
-    color: 'rgba(255,255,255,0.9)',
+    color: 'rgba(200, 220, 255, 0.9)',
     fontSize: 13,
     lineHeight: 19,
     marginBottom: 12,
+    textAlign: 'center',
   },
   choiceCta: {
-    color: '#ecfccb',
+    color: '#93c5fd',
     fontWeight: '800',
     fontSize: 14,
   },
+
+  // ── Tip box ──────────────────────────────────────────────
   tipBox: {
     marginTop: 8,
-    padding: 14,
+    padding: 16,
     borderRadius: 12,
-    backgroundColor: 'rgba(20,27,45,0.85)',
-    borderWidth: 1,
-    borderColor: '#334155',
+    backgroundColor: C.surface,
+    borderWidth: 2,
+    borderColor: C.navy,
   },
   tipTitle: {
-    color: '#fbbf24',
-    fontWeight: '700',
+    color: C.navy,
+    fontWeight: '800',
+    fontSize: 15,
     marginBottom: 6,
   },
   tipBody: {
-    color: '#94a3b8',
+    color: C.textMuted,
     fontSize: 13,
     lineHeight: 19,
   },
   mono: {
     fontFamily: 'monospace',
-    color: '#e2e8f0',
+    color: C.navyLight,
+    fontSize: 12,
   },
 });
