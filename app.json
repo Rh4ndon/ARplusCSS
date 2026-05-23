@@ -13,12 +13,17 @@
       "resizeMode": "contain",
       "backgroundColor": "#0047AB"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.arpluscss.app",
       "infoPlist": {
-        "NSCameraUsageDescription": "ARplusCSS uses the camera to scan your motherboard reference image and show interactive AR guides."
+        "NSCameraUsageDescription": "ARplusCSS uses the camera to scan your motherboard reference image and show interactive AR guides.",
+        "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photos",
+        "NSPhotoLibraryAddUsageDescription": "Allow $(PRODUCT_NAME) to save photos",
+        "NSMicrophoneUsageDescription": "ARplusCSS does not record audio; this permission is unused."
       }
     },
     "android": {
@@ -58,6 +63,11 @@
           }
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "f32b2c8a-e6c4-4836-b227-9f1933a774ed"
+      }
+    }
   }
 }
