@@ -5,10 +5,12 @@ import { colors } from '../theme/colors';
 
 export function ARHud({
   markerDetected,
-  activeSlotLabel,
+  description,
+  showInfo,
+  onToggleInfo,
   onExit,
   scanningHint = 'Point camera at motherboard marker',
-  detectedHint = 'Motherboard detected — tap a slot',
+  detectedHint = 'Motherboard detected \u2014 tap a slot',
 }) {
   const insets = useSafeAreaInsets();
 
@@ -25,6 +27,15 @@ export function ARHud({
           <Text style={styles.badgeText}>
             {markerDetected ? detectedHint : scanningHint}
           </Text>
+          {description && (
+            <Pressable
+              style={[styles.infoBtn, showInfo && styles.infoBtnActive]}
+              onPress={onToggleInfo}
+              hitSlop={8}
+            >
+              <Text style={[styles.infoBtnText, showInfo && styles.infoBtnTextActive]}>i</Text>
+            </Pressable>
+          )}
         </View>
         {onExit && (
           <Pressable style={styles.exitBtn} onPress={onExit}>
@@ -32,9 +43,9 @@ export function ARHud({
           </Pressable>
         )}
       </View>
-      {activeSlotLabel && (
-        <View style={styles.activeChip}>
-          <Text style={styles.activeChipText}>Learning: {activeSlotLabel}</Text>
+      {showInfo && description && (
+        <View style={styles.descBanner}>
+          <Text style={styles.descText}>{description}</Text>
         </View>
       )}
     </View>
@@ -74,6 +85,41 @@ const styles = StyleSheet.create({
     fontSize: 13,
     flex: 1,
   },
+  infoBtn: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: colors.textMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  infoBtnActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary,
+  },
+  infoBtnText: {
+    color: colors.textMuted,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  infoBtnTextActive: {
+    color: '#ffffff',
+  },
+  descBanner: {
+    marginTop: 8,
+    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  descText: {
+    color: '#cbd5e1',
+    fontSize: 13,
+    lineHeight: 19,
+  },
   exitBtn: {
     backgroundColor: 'rgba(20,27,45,0.9)',
     paddingHorizontal: 14,
@@ -85,18 +131,5 @@ const styles = StyleSheet.create({
   exitText: {
     color: colors.text,
     fontWeight: '600',
-  },
-  activeChip: {
-    alignSelf: 'flex-start',
-    marginTop: 10,
-    backgroundColor: colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-  },
-  activeChipText: {
-    color: colors.text,
-    fontWeight: '600',
-    fontSize: 12,
   },
 });

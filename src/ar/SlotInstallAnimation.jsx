@@ -9,6 +9,7 @@ import {
 
 ViroMaterials.createMaterials({
   cpuPart: { diffuseColor: '#94a3b8' },
+  cpuBlockPart: { diffuseColor: '#06b6d4' },
   ramPart: { diffuseColor: '#22d3ee' },
   powerPart: { diffuseColor: '#fbbf24' },
   gpuPart: { diffuseColor: '#f97316' },
@@ -31,6 +32,11 @@ ViroAnimations.registerAnimations({
     easing: 'Bounce',
     duration: 1100,
   },
+  cpuBlockDropIn: {
+    properties: { positionY: 0.04 },
+    easing: 'Bounce',
+    duration: 1100,
+  },
   cablePlugIn: {
     properties: { positionZ: -0.01 },
     easing: 'EaseOut',
@@ -45,6 +51,7 @@ ViroAnimations.registerAnimations({
 
 const SLOT_ANIMATION = {
   cpu: 'cpuDropIn',
+  cpuBlock: 'cpuBlockDropIn',
   ram: 'ramSlideIn',
   atx24: 'cablePlugIn',
   eps8: 'cablePlugIn',
@@ -93,6 +100,14 @@ export function SlotInstallAnimation({ slotId, anchorPosition, visible }) {
           scale={[0.035, 0.008, 0.035]}
           materials={['cpuPart']}
           animation={{ name: 'cpuDropIn', run: true, loop: false }}
+        />
+      )}
+      {slotId === 'cpuBlock' && (
+        <ViroBox
+          position={[0, 0.06, 0]}
+          scale={[0.045, 0.02, 0.045]}
+          materials={['cpuBlockPart']}
+          animation={{ name: 'cpuBlockDropIn', run: true, loop: false }}
         />
       )}
       {slotId === 'ram' && (

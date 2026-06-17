@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ViroARImageMarker,
   ViroARScene,
   ViroAnimations,
+  ViroBox,
   ViroMaterials,
   ViroNode,
   ViroQuad,
-  ViroText,
   Viro3DObject,
   ViroAmbientLight,
   ViroDirectionalLight,
@@ -20,6 +20,7 @@ import {
   notifyMarkerFound,
   notifyMarkerLost,
   notifySelectSlot,
+  prerequisites,
   subscribeARSceneState,
 } from './arSceneBridge';
 
@@ -28,11 +29,15 @@ ViroMaterials.createMaterials({
     diffuseColor: '#1e3a5f',
     lightingModel: 'Constant',
   },
-  hotspotIdle: {
-    diffuseColor: '#f97316',
+  hotspotAvailable: {
+    diffuseColor: '#3b82f6',
     lightingModel: 'Constant',
   },
-  hotspotActive: {
+  hotspotLocked: {
+    diffuseColor: '#475569',
+    lightingModel: 'Constant',
+  },
+  hotspotInstalled: {
     diffuseColor: '#34d399',
     lightingModel: 'Constant',
   },
@@ -45,9 +50,14 @@ ViroAnimations.registerAnimations({
     duration: 650,
   },
   hotspotPulse: {
-    properties: { scaleX: 1.12, scaleY: 1.12, scaleZ: 1.12 },
+    properties: { scaleX: 1.15, scaleY: 1.15, scaleZ: 1.15 },
     easing: 'EaseInEaseOut',
-    duration: 450,
+    duration: 500,
+  },
+  componentPopIn: {
+    properties: { scaleX: 1, scaleY: 1, scaleZ: 1 },
+    easing: 'Bounce',
+    duration: 900,
   },
 });
 
@@ -58,55 +68,58 @@ const hotspotLabelStyle = {
   textAlign: 'center',
 };
 
+const HOTSPOT_ZONES = {
+  cpu: { x: [-0.05, -0.015], y: [0.115, 0.145] },
+};
+
+const COMPONENT_MODELS = {
+  cpu: { source: require('../../assets/models/components/cpu.glb'), scale: [0.025, 0.025, 0.025], rotation: [-90, 0, 0] },
+  cpuBlock: { source: require('../../assets/models/components/fan.glb'), scale: [0.025, 0.025, 0.025], rotation: [-90, 0, 0] },
+  ram: { source: require('../../assets/models/components/ram.glb'), scale: [0.025, 0.025, 0.025], rotation: [-90, 0, 0] },
+};
+
 export function MotherboardARSceneInner() {
   const [bridge, setBridge] = useState(getARSceneState);
   const [modelError, setModelError] = useState(false);
 
   useEffect(() => subscribeARSceneState(setBridge), []);
 
-  const { activeSlot, playInstallAnim, torchOn } = bridge;
+  const { activeSlot, playInstallAnim, torchOn, installedSlots } = bridge;
   const activeHotspot = motherboardHotspots.find((h) => h.id === activeSlot);
+
+  const isSlotInstalled = (id) => installedSlots.includes(id);
+  const isSlotAvailable = (id) => {
+    if (isSlotInstalled(id)) return false;
+    const deps = prerequisites[id] || [];
+    return deps.every((d) => installedSlots.includes(d));
+  };
 
   return (
     <ViroARScene cameraFlash={torchOn ? 'on' : 'off'}>
-      {/* Higher-intensity lights so the tracked motherboard is well-illuminated */}
       <ViroAmbientLight color="#ffffff" intensity={350} />
-      <ViroDirectionalLight 
-        color="#ffffff" 
-        direction={[0, -1, -1]} 
+      <ViroDirectionalLight
+        color="#ffffff"
+        direction={[0, -1, -1]}
         intensity={500}
       />
-      {/* Fill light from the front to reduce harsh shadows on the real board */}
       <ViroDirectionalLight
         color="#ffffff"
         direction={[0, 0, 1]}
         intensity={200}
       />
-      
+
       <ViroARImageMarker
         target={MOTHERBOARD_TARGET_NAME}
         onAnchorFound={() => notifyMarkerFound()}
         onAnchorUpdated={() => notifyMarkerFound()}
         onAnchorRemoved={() => notifyMarkerLost()}
       >
-        <ViroNode animation={{ name: 'boardPopIn', run: true, loop: false }}>
-          <ViroQuad
-            rotation={[0, 0, 0]}
-            width={0.2}
-            height={0.14}
-            position={[0, 0.001, 0]}
-            materials={['boardGlow']}
-            opacity={0.3}
-          />
-        </ViroNode>
-
-        
         <Viro3DObject
           source={require('../../assets/models/motherboard/motherboard.glb')}
           type="GLB"
-          position={[-0.01, 0, 0]}
-          scale={[0.13, 0.13, 0.13]}
-          rotation={[260, 0, 0]}
+          position={[-0.01, 0.01, 0]}
+          scale={[0.25, 0.25, 0.25]}
+          rotation={[1, 181, 3]}
           onError={(error) => {
             console.log('Model loading error:', error);
             setModelError(true);
@@ -115,51 +128,52 @@ export function MotherboardARSceneInner() {
             console.log('Model loaded successfully');
             setModelError(false);
           }}
+          onClickState={(state, pos) => {
+            if (state === 3) {
+              const available = motherboardHotspots.filter((h) => isSlotAvailable(h.id));
+              if (available.length > 0) {
+                console.log('[DEBUG] Model tap → installing:', available[0].id);
+                notifySelectSlot(available[0].id);
+              }
+            }
+          }}
         />
 
-        {/* Debug text */}
-        {modelError && (
-          <ViroText
-            text="Model failed to load. Check scale/position or GLB format."
-            position={[0, 0.05, 0]}
-            rotation={[-90, 0, 0]}
-            width={0.2}
-            height={0.05}
-            style={{ fontFamily: 'Arial', fontSize: 12, color: 'red' }}
-          />
-        )}
-
-        {/* Hotspots - Only show when active or when a slot is selected */}
         {motherboardHotspots.map((hotspot) => {
+          const installed = isSlotInstalled(hotspot.id);
+          const available = isSlotAvailable(hotspot.id);
           const isActive = activeSlot === hotspot.id;
-          // Only render the hotspot if it's active OR if we want to show all with low opacity
-          // To completely hide inactive hotspots, use this condition:
-          if (!isActive) return null; // ← This hides all inactive hotspots
-          
+          const modelConfig = COMPONENT_MODELS[hotspot.id];
           const [w, h] = hotspot.size;
-          return (
-            <ViroNode key={hotspot.id} position={hotspot.position}>
-              <ViroQuad
-                rotation={[-90, 0, 0]}
-                width={w}
-                height={h}
-                materials={['hotspotActive']}  // Always active since we filtered
-                opacity={0.9}
-                onClick={() => notifySelectSlot(hotspot.id)}
-                animation={{ name: 'hotspotPulse', run: true, loop: true }}
-              />
-              {/* Optional: Add text labels back if needed */}
-              <ViroText
-                text={componentGuides[hotspot.id].shortLabel}
-                position={[0, 0.015, 0]}
-                rotation={[-90, 0, 0]}
-                width={0.09}
-                height={0.035}
-                style={hotspotLabelStyle}
-                onClick={() => notifySelectSlot(hotspot.id)}
-              />
-            </ViroNode>
-          );
+
+          console.log('[DEBUG] Hotspot render:', hotspot.id, 'installed:', installed, 'available:', available, 'isActive:', isActive, 'modelConfig:', !!modelConfig);
+
+          if (installed && modelConfig) {
+            console.log('[DEBUG] → RENDERING 3D MODEL FOR:', hotspot.id);
+            return (
+              <ViroNode key={hotspot.id} position={hotspot.position}>
+                <ViroQuad
+                  rotation={[-90, 0, 0]}
+                  width={w}
+                  height={h}
+                  materials={['hotspotInstalled']}
+                  opacity={0.9}
+                  animation={{ name: 'hotspotPulse', run: true, loop: true }}
+                />
+                <Viro3DObject
+                  source={modelConfig.source}
+                  type="GLB"
+                  position={[0, 0.01, 0]}
+                  scale={modelConfig.scale}
+                  rotation={modelConfig.rotation}
+                  onLoad={() => console.log('[DEBUG] Component model loaded:', hotspot.id)}
+                  onError={(err) => console.log('[DEBUG] Component model error:', hotspot.id, err)}
+                />
+              </ViroNode>
+            );
+          }
+
+          return null;
         })}
 
         {activeHotspot && playInstallAnim && (

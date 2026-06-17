@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.45)',
   },
   sheet: {
-    maxHeight: '62%',
+    maxHeight: '80%',
     backgroundColor: colors.surface,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,

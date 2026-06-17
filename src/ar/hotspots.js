@@ -2,9 +2,15 @@
 export const motherboardHotspots = [
   {
     id: 'cpu',
-    position: [0, 0.02, -0.01],
-    size: [0.055, 0.055],
+    position: [-0.01, 0.02, -0.06],
+    size: [0.05, 0.045],
     color: '#3b82f6',
+  },
+  {
+    id: 'cpuBlock',
+    position: [0, 0.04, -0.01],
+    size: [0.06, 0.06],
+    color: '#06b6d4',
   },
   {
     id: 'ram',
