@@ -142,41 +142,36 @@ export const componentGuides = {
     ],
     animationKey: 'atx24',
   },
-  eps8: {
-    id: 'eps8',
-    label: '8-Pin EPS (CPU Power)',
-    shortLabel: '8-Pin EPS',
+  eps4: {
+    id: 'eps4',
+    label: '4-Pin ATX/EPS (CPU Power)',
+    shortLabel: '4-Pin EPS',
     description:
-      'The 8-pin EPS (CPU power) connector supplies dedicated power to the processor from the PSU, ensuring stable voltage for demanding workloads.',
+      'The 4-pin ATX/EPS connector provides dedicated power to the processor from the PSU, delivering stable voltage for the CPU\'s power delivery circuitry.',
     summary:
-      'Dedicated CPU power near the socket. Often labeled CPU_PWR or EPS12V.',
+      'CPU power near the socket. Often labeled CPU_PWR or ATX12V on the board.',
     steps: [
       {
         title: 'Locate CPU_PWR',
         detail:
-          'Find the 4+4 or 8-pin header at the top-left of most ATX boards.',
+          'Find the 4-pin header at the top-left of most ATX boards, near the CPU socket.',
       },
       {
-        title: 'Split or combine',
+        title: 'Align the clip',
         detail:
-          'Use a single 8-pin or two 4-pin plugs depending on your PSU cables.',
+          'Ensure the locking tab on the plug lines up with the latch on the header.',
       },
       {
-        title: 'Seat the connector',
+        title: 'Press firmly',
         detail:
-          'Align the clip, press firmly until the latch engages.',
-      },
-      {
-        title: 'High-end CPUs',
-        detail:
-          'Some boards need a second 8-pin for overclocking—check your manual.',
+          'Push straight down until the latch clicks into place.',
       },
     ],
     safetyTips: [
-      'Do not confuse EPS 8-pin with PCIe 8-pin GPU power.',
-      'EPS connectors are keyed differently from PCIe.',
+      'Do not confuse the 4-pin CPU power with a 4-pin PCIe or fan header.',
+      'Route the cable behind the motherboard tray for a cleaner build.',
     ],
-    animationKey: 'eps8',
+    animationKey: 'eps4',
   },
   gpu: {
     id: 'gpu',

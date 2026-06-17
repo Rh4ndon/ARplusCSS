@@ -16,7 +16,7 @@ export const prerequisites = {
   cpuBlock: ['cpu'],
   ram: ['cpu', 'cpuBlock'],
   atx24: ['cpu'],
-  eps8: ['cpu'],
+  eps4: ['cpu'],
   gpu: ['cpu'],
 };
 

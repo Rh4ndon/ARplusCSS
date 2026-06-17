@@ -25,7 +25,7 @@ export const motherboardHotspots = [
     color: '#fbbf24',
   },
   {
-    id: 'eps8',
+    id: 'eps4',
     position: [-0.05, 0.06, -0.01],
     size: [0.035, 0.035],
     color: '#a78bfa',
