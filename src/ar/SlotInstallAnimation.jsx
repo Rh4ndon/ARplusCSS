@@ -54,7 +54,7 @@ const SLOT_ANIMATION = {
   cpuBlock: 'cpuBlockDropIn',
   ram: 'ramSlideIn',
   atx24: 'cablePlugIn',
-  eps8: 'cablePlugIn',
+  eps4: 'cablePlugIn',
   gpu: 'gpuSeatIn',
 };
 
@@ -118,7 +118,7 @@ export function SlotInstallAnimation({ slotId, anchorPosition, visible }) {
           animation={{ name: 'ramSlideIn', run: true, loop: false }}
         />
       )}
-      {(slotId === 'atx24' || slotId === 'eps8') && (
+      {(slotId === 'atx24' || slotId === 'eps4') && (
         <ViroBox
           position={[0, 0, 0.04]}
           scale={[0.03, 0.015, 0.05]}
