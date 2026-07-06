@@ -7,18 +7,26 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 
-export function InstallGuidePanel({ guide, onClose, onReplayInstall }) {
+export function InstallGuidePanel({ guide, onClose }) {
+  const insets = useSafeAreaInsets();
+
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+      <View style={styles.fill}>
+        <View style={styles.backdropArea} />
+        <View style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]}>
           <View style={styles.handle} />
           <Text style={styles.title}>{guide.label}</Text>
           <Text style={styles.summary}>{guide.summary}</Text>
 
-          <ScrollView style={styles.steps} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.stepsScroll}
+            contentContainerStyle={styles.stepsContent}
+            showsVerticalScrollIndicator={false}
+          >
             {guide.steps.map((step, index) => (
               <View key={step.title} style={styles.stepRow}>
                 <View style={styles.stepBadge}>
@@ -39,35 +47,32 @@ export function InstallGuidePanel({ guide, onClose, onReplayInstall }) {
             ))}
           </ScrollView>
 
-          <View style={styles.actions}>
-            <Pressable style={styles.secondaryBtn} onPress={onReplayInstall}>
-              <Text style={styles.secondaryBtnText}>Replay AR animation</Text>
-            </Pressable>
-            <Pressable style={styles.primaryBtn} onPress={onClose}>
-              <Text style={styles.primaryBtnText}>Back to board</Text>
-            </Pressable>
-          </View>
-        </Pressable>
-      </Pressable>
+          <Pressable style={styles.primaryBtn} onPress={onClose}>
+            <Text style={styles.primaryBtnText}>Back to board</Text>
+          </Pressable>
+        </View>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
+  fill: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  backdropArea: {
+    flex: 1,
   },
   sheet: {
-    maxHeight: '80%',
     backgroundColor: colors.surface,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingTop: 0,
     borderTopWidth: 1,
     borderColor: colors.border,
+    maxHeight: '80%',
   },
   handle: {
     alignSelf: 'center',
@@ -88,8 +93,11 @@ const styles = StyleSheet.create({
     marginTop: 6,
     lineHeight: 20,
   },
-  steps: {
+  stepsScroll: {
     marginTop: 16,
+  },
+  stepsContent: {
+    paddingBottom: 8,
   },
   stepRow: {
     flexDirection: 'row',
@@ -133,34 +141,16 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: 4,
   },
-  actions: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 12,
-  },
-  secondaryBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-  },
-  secondaryBtnText: {
-    color: colors.text,
-    fontSize: 13,
-    fontWeight: '600',
-  },
   primaryBtn: {
-    flex: 1,
-    paddingVertical: 12,
+    marginTop: 12,
+    paddingVertical: 14,
     borderRadius: 10,
     backgroundColor: colors.primary,
     alignItems: 'center',
   },
   primaryBtnText: {
     color: colors.text,
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '700',
   },
 });

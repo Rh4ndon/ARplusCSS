@@ -1,9 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   ViroARImageMarker,
   ViroARScene,
-  ViroAnimations,
-  ViroBox,
   ViroMaterials,
   ViroNode,
   ViroQuad,
@@ -12,15 +10,16 @@ import {
   ViroDirectionalLight,
 } from '@reactvision/react-viro';
 import { motherboardHotspots } from './hotspots';
-import { SlotInstallAnimation } from './SlotInstallAnimation';
 import { MOTHERBOARD_TARGET_NAME } from './trackingTargets';
-import { componentGuides } from '../data/componentGuides';
 import {
   getARSceneState,
+  notifyInstallComplete,
   notifyMarkerFound,
   notifyMarkerLost,
+  notifyModelLoadEnd,
+  notifyModelLoadStart,
   notifySelectSlot,
-  prerequisites,
+  patchARSceneState,
   subscribeARSceneState,
 } from './arSceneBridge';
 
@@ -37,65 +36,104 @@ ViroMaterials.createMaterials({
     diffuseColor: '#475569',
     lightingModel: 'Constant',
   },
-  hotspotInstalled: {
-    diffuseColor: '#34d399',
-    lightingModel: 'Constant',
-  },
 });
 
-ViroAnimations.registerAnimations({
-  boardPopIn: {
-    properties: { scaleX: 1, scaleY: 1, scaleZ: 1, opacity: 1 },
-    easing: 'EaseOut',
-    duration: 650,
-  },
-  hotspotPulse: {
-    properties: { scaleX: 1.15, scaleY: 1.15, scaleZ: 1.15 },
-    easing: 'EaseInEaseOut',
-    duration: 500,
-  },
-  componentPopIn: {
-    properties: { scaleX: 1, scaleY: 1, scaleZ: 1 },
-    easing: 'Bounce',
-    duration: 900,
-  },
-});
-
-const hotspotLabelStyle = {
-  fontFamily: 'Arial',
-  fontSize: 14,
-  color: '#ffffff',
-  textAlign: 'center',
+export const COMPONENT_MODELS = {
+  cpu: { source: require('../../assets/models/components/cpu.glb'), position: [-0.005, -0.02, -0.008], scale: [0.040, 0.040, 0.040], rotation: [184, 0, 66], dragZMin: 0.08},
+  cpuBlock: { source: require('../../assets/models/components/fan.glb'), position: [-0.006, 0.01, -0.001], scale: [0.0065, 0.0065, 0.0065], rotation: [180, 0, 185], dragZMin: 0.04 },
+  ram: { source: require('../../assets/models/components/ram.glb'), position: [-0.005, 0.0020, 0.015], scale: [0.00129, 0.00129, 0.00129], rotation: [91.5, 91, 9], dragZMin: 0.1 },
 };
 
-const HOTSPOT_ZONES = {
-  cpu: { x: [-0.05, -0.015], y: [0.115, 0.145] },
-};
+const DEFAULT_DRAG_Z_MIN = 0.05;
+const INSTALL_ORDER = ['cpu', 'cpuBlock', 'ram', 'eps4', 'atx24', 'sata', 'frontPanelUsb', 'powerSw', 'resetSw', 'gpu'];
 
-const COMPONENT_MODELS = {
-  cpu: { source: require('../../assets/models/components/cpu.glb'), scale: [0.025, 0.025, 0.025], rotation: [-90, 0, 0] },
-  cpuBlock: { source: require('../../assets/models/components/fan.glb'), scale: [0.025, 0.025, 0.025], rotation: [-90, 0, 0] },
-  ram: { source: require('../../assets/models/components/ram.glb'), scale: [0.025, 0.025, 0.025], rotation: [-90, 0, 0] },
-};
+function getDragZMin(slotId) {
+  return COMPONENT_MODELS[slotId]?.dragZMin ?? DEFAULT_DRAG_Z_MIN;
+}
+
+function clampDragPosition(pos, slotId) {
+  const dragZMin = getDragZMin(slotId);
+  return [pos[0], pos[1], Math.max(pos[2], dragZMin)];
+}
+
+function getDragStart(hotspot, slotId) {
+  const dragZMin = getDragZMin(slotId);
+  if (!hotspot) return [0, 0.03, dragZMin];
+  return [hotspot.position[0], hotspot.position[1] + 0.03, dragZMin];
+}
+
+function ComponentModel({ source, trackLoading = false, onLoadStart, onLoadEnd, ...props }) {
+  return (
+    <Viro3DObject
+      source={source}
+      type="GLB"
+      onLoadStart={
+        trackLoading
+          ? () => {
+              notifyModelLoadStart();
+              onLoadStart?.();
+            }
+          : undefined
+      }
+      onLoadEnd={
+        trackLoading
+          ? () => {
+              notifyModelLoadEnd();
+              onLoadEnd?.();
+            }
+          : undefined
+      }
+      {...props}
+    />
+  );
+}
 
 export function MotherboardARSceneInner() {
-  const [bridge, setBridge] = useState(getARSceneState);
-  const [modelError, setModelError] = useState(false);
+  const [installedSlots, setInstalledSlots] = useState(
+    () => getARSceneState().installedSlots,
+  );
+  const [placingSlot, setPlacingSlot] = useState(
+    () => getARSceneState().placingSlot,
+  );
+  const snappedRef = useRef(false);
+  const dragPosRef = useRef(null);
+  const [modelPos, setModelPos] = useState([0, 0.03, DEFAULT_DRAG_Z_MIN]);
 
-  useEffect(() => subscribeARSceneState(setBridge), []);
+  useEffect(
+    () =>
+      subscribeARSceneState((s) => {
+        setInstalledSlots(s.installedSlots);
+        setPlacingSlot(s.placingSlot);
+      }),
+    [],
+  );
 
-  const { activeSlot, playInstallAnim, torchOn, installedSlots } = bridge;
-  const activeHotspot = motherboardHotspots.find((h) => h.id === activeSlot);
+  useLayoutEffect(() => {
+    if (placingSlot && !installedSlots.includes(placingSlot)) {
+      snappedRef.current = false;
+      const hotspot = motherboardHotspots.find((h) => h.id === placingSlot);
+      const startPos = getDragStart(hotspot, placingSlot);
+      setModelPos(startPos);
+      dragPosRef.current = null;
+    }
+  }, [placingSlot, installedSlots]);
 
-  const isSlotInstalled = (id) => installedSlots.includes(id);
-  const isSlotAvailable = (id) => {
-    if (isSlotInstalled(id)) return false;
-    const deps = prerequisites[id] || [];
-    return deps.every((d) => installedSlots.includes(d));
+  const nextComponent = INSTALL_ORDER.find((id) => !installedSlots.includes(id));
+  const isSlotAvailable = (id) => id === nextComponent;
+
+  const isPlacing = placingSlot && !installedSlots.includes(placingSlot);
+  const placingModelConfig = isPlacing ? COMPONENT_MODELS[placingSlot] : null;
+  const placingHotspot = isPlacing ? motherboardHotspots.find((h) => h.id === placingSlot) : null;
+
+  const completeInstall = (slotId) => {
+    if (snappedRef.current) return;
+    snappedRef.current = true;
+    notifyInstallComplete(slotId);
+    patchARSceneState({ placingSlot: null });
   };
 
   return (
-    <ViroARScene cameraFlash={torchOn ? 'on' : 'off'}>
+    <ViroARScene>
       <ViroAmbientLight color="#ffffff" intensity={350} />
       <ViroDirectionalLight
         color="#ffffff"
@@ -120,54 +158,48 @@ export function MotherboardARSceneInner() {
           position={[-0.01, 0.01, 0]}
           scale={[0.25, 0.25, 0.25]}
           rotation={[1, 181, 3]}
-          onError={(error) => {
-            console.log('Model loading error:', error);
-            setModelError(true);
-          }}
-          onLoad={() => {
-            console.log('Model loaded successfully');
-            setModelError(false);
-          }}
-          onClickState={(state, pos) => {
-            if (state === 3) {
-              const available = motherboardHotspots.filter((h) => isSlotAvailable(h.id));
-              if (available.length > 0) {
-                console.log('[DEBUG] Model tap → installing:', available[0].id);
-                notifySelectSlot(available[0].id);
-              }
+          ignoreEventHandling={!!placingSlot}
+          onClickState={(state) => {
+            if (state !== 3) return;
+            if (placingSlot) return;
+            if (nextComponent) {
+              notifySelectSlot(nextComponent);
             }
           }}
         />
 
         {motherboardHotspots.map((hotspot) => {
-          const installed = isSlotInstalled(hotspot.id);
-          const available = isSlotAvailable(hotspot.id);
-          const isActive = activeSlot === hotspot.id;
           const modelConfig = COMPONENT_MODELS[hotspot.id];
           const [w, h] = hotspot.size;
 
-          console.log('[DEBUG] Hotspot render:', hotspot.id, 'installed:', installed, 'available:', available, 'isActive:', isActive, 'modelConfig:', !!modelConfig);
-
-          if (installed && modelConfig) {
-            console.log('[DEBUG] → RENDERING 3D MODEL FOR:', hotspot.id);
+          if (installedSlots.includes(hotspot.id) && modelConfig) {
             return (
-              <ViroNode key={hotspot.id} position={hotspot.position}>
+              <ViroNode key={`installed-${hotspot.id}`} position={hotspot.position}>
+                <Viro3DObject
+                  source={modelConfig.source}
+                  type="GLB"
+                  position={modelConfig.position}
+                  scale={modelConfig.scale}
+                  rotation={modelConfig.rotation}
+                />
+              </ViroNode>
+            );
+          }
+
+          if (isSlotAvailable(hotspot.id) && !installedSlots.includes(hotspot.id) && (!isPlacing || hotspot.id === placingSlot)) {
+            const isTarget = isPlacing && hotspot.id === placingSlot;
+            return (
+              <ViroNode key={`hotspot-${hotspot.id}`} position={hotspot.position}>
                 <ViroQuad
                   rotation={[-90, 0, 0]}
                   width={w}
                   height={h}
-                  materials={['hotspotInstalled']}
-                  opacity={0.9}
-                  animation={{ name: 'hotspotPulse', run: true, loop: true }}
-                />
-                <Viro3DObject
-                  source={modelConfig.source}
-                  type="GLB"
-                  position={[0, 0.01, 0]}
-                  scale={modelConfig.scale}
-                  rotation={modelConfig.rotation}
-                  onLoad={() => console.log('[DEBUG] Component model loaded:', hotspot.id)}
-                  onError={(err) => console.log('[DEBUG] Component model error:', hotspot.id, err)}
+                  materials={['hotspotAvailable']}
+                  opacity={isTarget ? 0.6 : 0.3}
+                  onClickState={isTarget ? (state) => {
+                    if (state !== 3) return;
+                    completeInstall(placingSlot);
+                  } : undefined}
                 />
               </ViroNode>
             );
@@ -176,12 +208,38 @@ export function MotherboardARSceneInner() {
           return null;
         })}
 
-        {activeHotspot && playInstallAnim && (
-          <SlotInstallAnimation
-            slotId={activeHotspot.id}
-            anchorPosition={activeHotspot.position}
-            visible
-          />
+        {nextComponent && COMPONENT_MODELS[nextComponent] && !isPlacing && (
+          <ViroNode visible={false}>
+            <ComponentModel
+              trackLoading
+              source={COMPONENT_MODELS[nextComponent].source}
+            />
+          </ViroNode>
+        )}
+
+        {isPlacing && placingModelConfig && placingHotspot && (
+          <ViroNode
+            key={`placing-${placingSlot}`}
+            position={modelPos}
+            dragType="FixedToWorld"
+            onDrag={(pos) => {
+              const clamped = clampDragPosition(pos, placingSlot);
+              setModelPos(clamped);
+              dragPosRef.current = clamped;
+            }}
+            onClickState={(state) => {
+              if (state !== 3) return;
+              completeInstall(placingSlot);
+            }}
+          >
+            <ComponentModel
+              trackLoading
+              source={placingModelConfig.source}
+              position={[0, 0, 0]}
+              scale={placingModelConfig.scale}
+              rotation={placingModelConfig.rotation}
+            />
+          </ViroNode>
         )}
       </ViroARImageMarker>
     </ViroARScene>
