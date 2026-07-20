@@ -1,22 +1,24 @@
 import { ViroARTrackingTargets } from '@reactvision/react-viro';
 
-/** Physical width of the printed marker in meters. */
-export const MOTHERBOARD_MARKER_PHYSICAL_WIDTH_M = 0.21;
-
 export const MOTHERBOARD_TARGET_NAME = 'motherboard';
+export const RJ45_TARGET_NAME = 'rj45';
 
 let targetsRegistered = false;
 
-export function registerMotherboardTrackingTarget() {
+export function registerMotherboardTrackingTarget({ sourceUri, physicalWidth } = {}) {
   if (targetsRegistered) {
-    return;
+    ViroARTrackingTargets.deleteTarget(MOTHERBOARD_TARGET_NAME);
   }
+
+  const source = sourceUri
+    ? { uri: sourceUri }
+    : require('../../assets/images/motherboard-marker.jpg');
 
   ViroARTrackingTargets.createTargets({
     [MOTHERBOARD_TARGET_NAME]: {
-      source: require('../../assets/images/motherboard-marker.jpg'),
+      source,
       orientation: 'Up',
-      physicalWidth: MOTHERBOARD_MARKER_PHYSICAL_WIDTH_M,
+      physicalWidth: physicalWidth ?? 0.21,
     },
   });
 

@@ -26,7 +26,7 @@ const defaultStatus = 'Motherboard detected';
 
 const INSTALL_ORDER = ['cpu', 'cpuBlock', 'ram', 'eps4', 'atx24', 'sata', 'frontPanelUsb', 'powerSw', 'resetSw', 'gpu'];
 
-export function ARMotherboardScene({ onExit }) {
+export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
   const [markerVisible, setMarkerVisible] = useState(false);
   const [activeSlot, setActiveSlot] = useState(null);
   const [installError, setInstallError] = useState(null);
@@ -45,7 +45,10 @@ export function ARMotherboardScene({ onExit }) {
   const prevLoading = useRef(false);
 
   useEffect(() => {
-    registerMotherboardTrackingTarget();
+    registerMotherboardTrackingTarget({
+      sourceUri: markerUri,
+      physicalWidth: markerPhysicalWidth,
+    });
     const unsub = subscribeARSceneState((s) => {
       if (s.installError !== undefined) setInstallError(s.installError ?? null);
       if (s.installSuccess !== undefined) setInstallSuccess(s.installSuccess ?? null);

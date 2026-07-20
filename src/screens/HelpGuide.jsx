@@ -16,7 +16,6 @@ const C = {
   warning:          '#b45309',   // tip title (amber, readable on light bg)
   text:             '#0c2d6b',   // primary text (navy)
   textMuted:        '#374e7a',   // body / secondary text
-  mono:             '#1e3a6e',   // inline code
 };
 
 export function HelpGuide() {
@@ -27,25 +26,29 @@ export function HelpGuide() {
         <Text style={styles.brand}>Help & Guide</Text>
       </View>
       <Text style={styles.tagline}>
-        Reference for ARplusCSS lessons. Print markers, use good lighting, and tap
-        hotspots in AR to open step-by-step instructions.
+        Reference for ARplusCSS lessons. Capture a photo of your hardware as the AR
+        marker, then tap hotspots to open step-by-step instructions.
       </Text>
 
       <SectionTitle>Using AR in this app</SectionTitle>
       <View style={styles.card}>
         <Text style={styles.cardBody}>
           1. Choose a lesson from the options menu.{'\n'}
-          2. Point your camera at the printed marker until tracking locks.{'\n'}
-          3. Tap colored hotspots on the model for guides and animations.{'\n'}
-          4. Use Replay AR animation on the guide sheet to see the motion again.
+          2. Point your camera at the hardware (motherboard or RJ45 port) and capture
+          a photo — this becomes your AR marker.{'\n'}
+          3. Set the physical width (defaults: motherboard ~24 cm, RJ45 ~12 cm).{'\n'}
+          4. Point the camera at the same hardware — tracking locks automatically.{'\n'}
+          5. Tap colored hotspots on the model for guides and animations.{'\n'}
+          6. Use Replay AR animation on the guide sheet to see the motion again.
         </Text>
       </View>
 
       <SectionTitle>Hardware components (motherboard)</SectionTitle>
       <Text style={styles.sectionIntro}>
-        Scan{' '}
-        <Text style={styles.mono}>assets/images/motherboard-marker.jpg</Text> (~A5 /
-        21 cm wide). Lessons cover:
+        Capture a photo of your motherboard to use as the marker (~24 cm wide).
+        Hotspot positions are calibrated for the{' '}
+        <Text style={styles.bold}>ASUS P5G41T-M LX3</Text> — any board with similar
+        layout works. Lessons cover:
       </Text>
       {Object.values(componentGuides).map((guide) => (
         <View key={guide.id} style={styles.card}>
@@ -56,8 +59,7 @@ export function HelpGuide() {
 
       <SectionTitle>Network cabling (RJ45)</SectionTitle>
       <Text style={styles.sectionIntro}>
-        Scan{' '}
-        <Text style={styles.mono}>assets/images/rj45-marker.jpg</Text> (~12 cm wide).
+        Capture a photo of an RJ45 port to use as the marker (~12 cm wide).
         Pick straight-through or crossover before starting AR.
       </Text>
 
@@ -82,12 +84,13 @@ export function HelpGuide() {
       })}
 
       <View style={styles.tipBox}>
-        <Text style={styles.tipTitle}>💡 Tips for best tracking</Text>
+        <Text style={styles.tipTitle}>📷 Tips for a good capture</Text>
         <Text style={styles.tipBody}>
-          • Use bright, even lighting — avoid glare on glossy markers.{'\n'}
-          • Keep the marker flat and fill part of the camera view.{'\n'}
-          • Hold the phone steady for a second when tracking starts.{'\n'}
-          • Replace placeholder markers with high-contrast photos for class use.
+          • Use bright, even lighting — avoid glare on the motherboard surface.{'\n'}
+          • Place the board flat and fill the frame guide when capturing.{'\n'}
+          • After capture, point the same hardware at the camera to start AR.{'\n'}
+          • Measure the physical width accurately for reliable tracking.{'\n'}
+          • Re-capture if tracking is unstable — different angles may work better.
         </Text>
       </View>
     </ScrollView>
@@ -201,6 +204,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
   },
+  bold: {
+    fontWeight: '700',
+    color: C.navyLight,
+  },
 
   // ── Tip box ──────────────────────────────────────────────
   tipBox: {
@@ -223,10 +230,4 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
-  // ── Inline mono ──────────────────────────────────────────
-  mono: {
-    fontFamily: 'monospace',
-    color: C.mono,
-    fontSize: 12,
-  },
 });

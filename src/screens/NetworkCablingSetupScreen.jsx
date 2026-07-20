@@ -40,7 +40,7 @@ export function NetworkCablingSetupScreen({ navigation }) {
 
         <Pressable
           style={({ pressed }) => [styles.choiceCard, pressed && styles.choicePressed]}
-          onPress={() => navigation.navigate('ARNetwork', { wiringType: 'straight' })}
+          onPress={() => navigation.navigate('MarkerCapture', { type: 'rj45', returnTo: 'ARNetwork', returnParams: { wiringType: 'straight' } })}
         >
           <View style={styles.choiceInner}>
             <Text style={styles.choiceTitle}>Straight-Through</Text>
@@ -51,7 +51,7 @@ export function NetworkCablingSetupScreen({ navigation }) {
 
         <Pressable
           style={({ pressed }) => [styles.choiceCard, pressed && styles.choicePressed]}
-          onPress={() => navigation.navigate('ARNetwork', { wiringType: 'crossover' })}
+          onPress={() => navigation.navigate('MarkerCapture', { type: 'rj45', returnTo: 'ARNetwork', returnParams: { wiringType: 'crossover' } })}
         >
           <View style={styles.choiceInner}>
             <Text style={styles.choiceTitle}>Crossover</Text>
@@ -61,11 +61,9 @@ export function NetworkCablingSetupScreen({ navigation }) {
         </Pressable>
 
         <View style={styles.tipBox}>
-          <Text style={styles.tipTitle}>💡 Marker tip</Text>
+          <Text style={styles.tipTitle}>📷 Capture tip</Text>
           <Text style={styles.tipBody}>
-            Print{' '}
-            <Text style={styles.mono}>assets/images/rj45-marker.jpg</Text> at about
-            12 cm width. Use good lighting and a flat surface.
+            Point your camera at an RJ45 port and we will use it as the AR marker.
           </Text>
         </View>
       </ScrollView>
@@ -157,10 +155,5 @@ const styles = StyleSheet.create({
     color: C.textMuted,
     fontSize: 13,
     lineHeight: 19,
-  },
-  mono: {
-    fontFamily: 'monospace',
-    color: C.navyLight,
-    fontSize: 12,
   },
 });

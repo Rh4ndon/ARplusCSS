@@ -52,7 +52,7 @@ export function OptionScreen({ navigation }) {
         <MenuCard
           imageSource={require('../../assets/images/option-hardware.png')}
           label="HARDWARE COMPONENTS"
-          onPress={() => navigation.navigate('AR')}
+          onPress={() => navigation.navigate('MarkerCapture', { type: 'motherboard', returnTo: 'AR' })}
         />
 
         <MenuCard
@@ -77,7 +77,7 @@ export function OptionScreen({ navigation }) {
         </Text>
         <Pressable
           style={styles.scanBtn}
-          onPress={() => navigation.navigate('AR')}
+          onPress={() => navigation.navigate('MarkerCapture', { type: 'motherboard', returnTo: 'AR' })}
         >
           <Text style={styles.scanIcon}>⌁</Text>
           <Text style={styles.scanLabel}>Scan</Text>

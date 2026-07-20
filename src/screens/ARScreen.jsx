@@ -3,10 +3,17 @@ import { StyleSheet, View } from 'react-native';
 import { ARMotherboardScene } from '../ar/ARMotherboardScene';
 import { colors } from '../theme/colors';
 
-export function ARScreen({ navigation }) {
+export function ARScreen({ navigation, route }) {
+  const markerUri = route?.params?.markerUri;
+  const markerPhysicalWidth = route?.params?.markerPhysicalWidth;
+
   return (
     <View style={styles.container}>
-      <ARMotherboardScene onExit={() => navigation.goBack()} />
+      <ARMotherboardScene
+        onExit={() => navigation.goBack()}
+        markerUri={markerUri}
+        markerPhysicalWidth={markerPhysicalWidth}
+      />
     </View>
   );
 }

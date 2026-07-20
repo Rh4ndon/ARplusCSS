@@ -5,12 +5,16 @@ import { colors } from '../theme/colors';
 
 export function ARNetworkScreen({ navigation, route }) {
   const wiringType = route.params?.wiringType ?? 'straight';
+  const markerUri = route.params?.markerUri;
+  const markerPhysicalWidth = route.params?.markerPhysicalWidth;
 
   return (
     <View style={styles.container}>
       <ARRj45Scene
         wiringType={wiringType}
         onExit={() => navigation.goBack()}
+        markerUri={markerUri}
+        markerPhysicalWidth={markerPhysicalWidth}
       />
     </View>
   );

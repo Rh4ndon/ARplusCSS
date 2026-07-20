@@ -8,6 +8,7 @@ import { NetworkCablingSetupScreen } from '../screens/NetworkCablingSetupScreen'
 import { HelpGuide } from '../screens/HelpGuide';
 import { ARScreen } from '../screens/ARScreen';
 import { ARNetworkScreen } from '../screens/ARNetworkScreen';
+import { MarkerCaptureScreen } from '../screens/MarkerCaptureScreen';
 import { colors } from '../theme/colors';
 
 const Stack = createNativeStackNavigator();
@@ -64,6 +65,15 @@ export function RootNavigator() {
           name="HelpGuide"
           component={HelpGuide}
           options={{ title: 'Help / Guide', headerShown: true }}
+        />
+        <Stack.Screen
+          name="MarkerCapture"
+          component={MarkerCaptureScreen}
+          options={{
+            title: 'Capture Marker',
+            headerShown: false,
+            animation: 'slide_from_bottom',
+          }}
         />
         <Stack.Screen
           name="AR"

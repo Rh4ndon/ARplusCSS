@@ -16,12 +16,15 @@ const stableRj45Scene = {
   scene: Rj45ARSceneInner,
 };
 
-export function ARRj45Scene({ wiringType, onExit }) {
+export function ARRj45Scene({ wiringType, onExit, markerUri, markerPhysicalWidth }) {
   const [markerVisible, setMarkerVisible] = useState(false);
   const [activeStep, setActiveStep] = useState(null);
 
   useEffect(() => {
-    registerRj45TrackingTarget();
+    registerRj45TrackingTarget({
+      sourceUri: markerUri,
+      physicalWidth: markerPhysicalWidth,
+    });
     patchRj45SceneState({ wiringType, activeStep: null, playInstallAnim: false });
     return () => resetRj45SceneState();
   }, [wiringType]);
