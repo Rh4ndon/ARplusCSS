@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   ViroARImageMarker,
   ViroARScene,
@@ -70,6 +70,7 @@ function ComponentModel({ source, trackLoading = false, onLoadStart, onLoadEnd, 
       onLoadStart={
         trackLoading
           ? () => {
+              console.log('[LOAD] onLoadStart called');
               notifyModelLoadStart();
               onLoadStart?.();
             }
@@ -78,11 +79,13 @@ function ComponentModel({ source, trackLoading = false, onLoadStart, onLoadEnd, 
       onLoadEnd={
         trackLoading
           ? () => {
+              console.log('[LOAD] onLoadEnd called');
               notifyModelLoadEnd();
               onLoadEnd?.();
             }
           : undefined
       }
+      onError={(e) => console.log('[LOAD] ComponentModel error', e)}
       {...props}
     />
   );
@@ -109,7 +112,9 @@ export function MotherboardARSceneInner() {
   );
 
   useLayoutEffect(() => {
+    console.log('[LAYOUTEFFECT] deps changed:', { placingSlot, installedSlots: [...installedSlots] });
     if (placingSlot && !installedSlots.includes(placingSlot)) {
+      console.log('[LAYOUTEFFECT] resetting for slot:', placingSlot);
       snappedRef.current = false;
       const hotspot = motherboardHotspots.find((h) => h.id === placingSlot);
       const startPos = getDragStart(hotspot, placingSlot);
@@ -132,6 +137,27 @@ export function MotherboardARSceneInner() {
     patchARSceneState({ placingSlot: null });
   };
 
+  const renderCount = useRef(0);
+  renderCount.current += 1;
+  console.log(`[RENDER#${renderCount.current}]`, {
+    placingSlot,
+    installedSlots,
+    isPlacing,
+    modelPos,
+    dragZMin: placingSlot ? getDragZMin(placingSlot) : null,
+  });
+
+  useLayoutEffect(() => {
+    if (isPlacing && placingSlot && placingModelConfig) {
+      console.log('[RENDER] floating model mounting for', placingSlot);
+    }
+    return () => {
+      if (placingSlot) {
+        console.log('[RENDER] floating model unmounting for', placingSlot);
+      }
+    };
+  }, [isPlacing, placingSlot, placingModelConfig]);
+
   return (
     <ViroARScene>
       <ViroAmbientLight color="#ffffff" intensity={350} />
@@ -148,7 +174,10 @@ export function MotherboardARSceneInner() {
 
       <ViroARImageMarker
         target={MOTHERBOARD_TARGET_NAME}
-        onAnchorFound={() => notifyMarkerFound()}
+        onAnchorFound={() => {
+          notifyMarkerFound();
+          patchARSceneState({ pendingModelLoads: 0 });
+        }}
         onAnchorUpdated={() => notifyMarkerFound()}
         onAnchorRemoved={() => notifyMarkerLost()}
       >
@@ -159,6 +188,9 @@ export function MotherboardARSceneInner() {
           scale={[0.25, 0.25, 0.25]}
           rotation={[1, 181, 3]}
           ignoreEventHandling={!!placingSlot}
+          onLoadStart={() => console.log('[LOAD] motherboard onLoadStart')}
+          onLoadEnd={() => console.log('[LOAD] motherboard onLoadEnd')}
+          onError={(e) => console.log('[LOAD] motherboard onError', e)}
           onClickState={(state) => {
             if (state !== 3) return;
             if (placingSlot) return;
@@ -186,8 +218,7 @@ export function MotherboardARSceneInner() {
             );
           }
 
-          if (isSlotAvailable(hotspot.id) && !installedSlots.includes(hotspot.id) && (!isPlacing || hotspot.id === placingSlot)) {
-            const isTarget = isPlacing && hotspot.id === placingSlot;
+          if (isPlacing && hotspot.id === placingSlot) {
             return (
               <ViroNode key={`hotspot-${hotspot.id}`} position={hotspot.position}>
                 <ViroQuad
@@ -195,11 +226,11 @@ export function MotherboardARSceneInner() {
                   width={w}
                   height={h}
                   materials={['hotspotAvailable']}
-                  opacity={isTarget ? 0.6 : 0.3}
-                  onClickState={isTarget ? (state) => {
+                  opacity={0.6}
+                  onClickState={(state) => {
                     if (state !== 3) return;
                     completeInstall(placingSlot);
-                  } : undefined}
+                  }}
                 />
               </ViroNode>
             );
@@ -210,9 +241,12 @@ export function MotherboardARSceneInner() {
 
         {nextComponent && COMPONENT_MODELS[nextComponent] && !isPlacing && (
           <ViroNode visible={false}>
-            <ComponentModel
-              trackLoading
+            <Viro3DObject
               source={COMPONENT_MODELS[nextComponent].source}
+              type="GLB"
+              onLoadStart={() => console.log('[LOAD] preload onLoadStart for', nextComponent)}
+              onLoadEnd={() => console.log('[LOAD] preload onLoadEnd for', nextComponent)}
+              onError={(e) => console.log('[LOAD] preload error for', nextComponent, e)}
             />
           </ViroNode>
         )}

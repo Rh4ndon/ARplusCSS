@@ -7,12 +7,16 @@ export function ARHud({
   markerDetected,
   description,
   showInfo,
+  phase,
+  onReset,
   onToggleInfo,
   onExit,
   scanningHint = 'Point camera at motherboard marker',
-  detectedHint = 'Motherboard detected \u2014 tap a slot',
+  detectedHint = 'Motherboard detected',
 }) {
   const insets = useSafeAreaInsets();
+
+  const showReset = phase !== 'done';
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 8 }]} pointerEvents="box-none">
@@ -37,11 +41,18 @@ export function ARHud({
             </Pressable>
           )}
         </View>
-        {onExit && (
-          <Pressable style={styles.exitBtn} onPress={onExit}>
-            <Text style={styles.exitText}>Exit</Text>
-          </Pressable>
-        )}
+        <View style={styles.topRight}>
+          {showReset && (
+            <Pressable style={styles.resetBtn} onPress={onReset}>
+              <Text style={styles.resetText}>Reset</Text>
+            </Pressable>
+          )}
+          {onExit && (
+            <Pressable style={styles.exitBtn} onPress={onExit}>
+              <Text style={styles.exitText}>Exit</Text>
+            </Pressable>
+          )}
+        </View>
       </View>
       {showInfo && description && (
         <View style={styles.descBanner}>
@@ -119,6 +130,24 @@ const styles = StyleSheet.create({
     color: '#cbd5e1',
     fontSize: 13,
     lineHeight: 19,
+  },
+  topRight: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  resetBtn: {
+    backgroundColor: 'rgba(239, 68, 68, 0.85)',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ef4444',
+  },
+  resetText: {
+    color: '#ffffff',
+    fontWeight: '600',
+    fontSize: 13,
   },
   exitBtn: {
     backgroundColor: 'rgba(20,27,45,0.9)',
