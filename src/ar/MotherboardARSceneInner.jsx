@@ -40,12 +40,18 @@ ViroMaterials.createMaterials({
 
 export const COMPONENT_MODELS = {
   cpu: { source: require('../../assets/models/components/cpu.glb'), position: [-0.005, -0.02, -0.008], scale: [0.040, 0.040, 0.040], rotation: [184, 0, 66], dragZMin: 0.08},
-  cpuBlock: { source: require('../../assets/models/components/fan.glb'), position: [-0.006, 0.01, -0.001], scale: [0.0065, 0.0065, 0.0065], rotation: [180, 0, 185], dragZMin: 0.04 },
+  cpuBlock: { source: require('../../assets/models/components/cpu-block.glb'), position: [-0.006, 0.01, -0.001], scale: [0.0065, 0.0065, 0.0065], rotation: [180, 0, 185], dragZMin: 0.04 },
   ram: { source: require('../../assets/models/components/ram.glb'), position: [-0.005, 0.0020, 0.015], scale: [0.00129, 0.00129, 0.00129], rotation: [91.5, 91, 9], dragZMin: 0.1 },
+  eps4: { source: require('../../assets/models/components/4pin.glb'), position: [-0.006, 0.01, 0.001], scale: [0.00129, 0.00129, 0.00129], rotation: [-91.5, -180, 9], dragZMin: 0.1 },
+  atx24: { source: require('../../assets/models/components/24pin.glb'), position: [0, 0, 0], scale: [1, 1, 1], rotation: [91.5, 91, 9], dragZMin: 0.1 },
+  sata: { source: require('../../assets/models/components/sata-cable.glb'), position: [-0.01, 0.001, 0.008], scale: [0.025, 0.025, 0.025], rotation: [85, 0, 0], dragZMin: 0.1 },
+  frontPanelUsb: { source: require('../../assets/models/components/front-panel-usb.glb'), position: [-0.008, -0.03, 0.008], scale: [0.06, 0.06, 0.06], rotation: [90, 0, -85], dragZMin: 0.08 },
+  switches: { source: require('../../assets/models/components/switches.glb'), position: [0, 0.005, 0], scale: [0.12, 0.12, 0.12], rotation: [90, 0, 0], dragZMin: 0.08 },
+  gpu: { source: require('../../assets/models/components/graphics-card.glb'), position: [0.06, 0.099, -0.006], scale: [0.018, 0.018, 0.018], rotation: [-90, 180, 0], dragZMin: 0.12 },
 };
 
 const DEFAULT_DRAG_Z_MIN = 0.05;
-const INSTALL_ORDER = ['cpu', 'cpuBlock', 'ram', 'eps4', 'atx24', 'sata', 'frontPanelUsb', 'powerSw', 'resetSw', 'gpu'];
+const INSTALL_ORDER = ['cpu', 'cpuBlock', 'ram', 'eps4', 'atx24', 'sata', 'frontPanelUsb', 'switches', 'gpu'];
 
 function getDragZMin(slotId) {
   return COMPONENT_MODELS[slotId]?.dragZMin ?? DEFAULT_DRAG_Z_MIN;
@@ -269,7 +275,7 @@ export function MotherboardARSceneInner() {
             <ComponentModel
               trackLoading
               source={placingModelConfig.source}
-              position={[0, 0, 0]}
+              position={placingModelConfig.position ?? [0, 0, 0]}
               scale={placingModelConfig.scale}
               rotation={placingModelConfig.rotation}
             />

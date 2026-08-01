@@ -20,44 +20,41 @@ export const motherboardHotspots = [
   },
   {
     id: 'atx24',
-    position: [-0.08, 0.03, -0.01],
-    size: [0.05, 0.07],
+    position: [0.075, 0.02, 0.015],
+    size: [0.015, 0.055],
     color: '#fbbf24',
   },
   {
     id: 'eps4',
-    position: [-0.05, 0.06, -0.01],
-    size: [0.035, 0.035],
+    position: [-0.06, 0.03, -0.09],
+    size: [0.02, 0.02],
     color: '#a78bfa',
   },
   {
     id: 'gpu',
-    position: [0, -0.07, -0.01],
-    size: [0.12, 0.035],
+    position: [0, 0.02, 0.06, 0.02],
+    size: [0.12, 0.02],
     color: '#f97316',
   },
   {
     id: 'sata',
-    position: [0.10, 0.01, -0.03],
-    size: [0.04, 0.04],
+    // Right edge, below ATX 24-pin (ATX is at z≈0.015)
+    position: [0.062, 0.03, 0.11],
+    size: [0.04, 0.019],
     color: '#84cc16',
   },
   {
     id: 'frontPanelUsb',
-    position: [0.08, 0.03, 0.02],
-    size: [0.03, 0.03],
+    // Bottom-right front-panel header area
+    position: [0.01, 0.05, 0.11],
+    size: [0.02, 0.01],
     color: '#06b6d4',
   },
   {
-    id: 'powerSw',
-    position: [0.06, 0.03, 0.04],
-    size: [0.02, 0.02],
+    id: 'switches',
+    // Front-panel power + reset pins — left of SATA, near bottom edge
+    position: [0.035, 0.02, 0.115],
+    size: [0.02, 0.01],
     color: '#f43f5e',
-  },
-  {
-    id: 'resetSw',
-    position: [0.04, 0.03, 0.04],
-    size: [0.02, 0.02],
-    color: '#8b5cf6',
   },
 ];

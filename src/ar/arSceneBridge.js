@@ -4,6 +4,9 @@ const INSTALL_LABELS = {
   ram: 'RAM',
   eps4: 'EPS 4-pin',
   atx24: 'ATX 24-pin',
+  sata: 'SATA',
+  frontPanelUsb: 'Front Panel USB',
+  switches: 'Switches',
   gpu: 'GPU',
 };
 
@@ -31,9 +34,8 @@ export const prerequisites = {
   atx24: ['eps4'],
   sata: ['atx24'],
   frontPanelUsb: ['sata'],
-  powerSw: ['frontPanelUsb'],
-  resetSw: ['powerSw'],
-  gpu: ['resetSw'],
+  switches: ['frontPanelUsb'],
+  gpu: ['switches'],
 };
 
 export function registerARSceneHandlers(handlers) {
@@ -60,7 +62,17 @@ export function notifySelectSlot(slotId) {
     const missing = deps.filter((d) => !state.installedSlots.includes(d));
     if (missing.length > 0) {
       const label = missing.map((id) => {
-        const map = { cpu: 'CPU', cpuBlock: 'CPU Block', ram: 'RAM', sata: 'SATA', frontPanelUsb: 'Front Panel USB', powerSw: 'Power SW', resetSw: 'Reset SW' };
+        const map = {
+          cpu: 'CPU',
+          cpuBlock: 'CPU Block',
+          ram: 'RAM',
+          eps4: 'EPS 4-pin',
+          atx24: 'ATX 24-pin',
+          sata: 'SATA',
+          frontPanelUsb: 'Front Panel USB',
+          switches: 'Switches',
+          gpu: 'GPU',
+        };
         return map[id] || id;
       }).join(', ');
       patchARSceneState({ installError: `Install ${label} first` });

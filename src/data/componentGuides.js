@@ -173,6 +173,109 @@ export const componentGuides = {
     ],
     animationKey: 'eps4',
   },
+  sata: {
+    id: 'sata',
+    label: 'SATA Data Cable',
+    shortLabel: 'SATA',
+    description:
+      'SATA cables connect storage drives (SSD/HDD) to the motherboard so the system can read and write data.',
+    summary:
+      'Plug the L-shaped SATA connector into a motherboard SATA port until it seats firmly.',
+    steps: [
+      {
+        title: 'Find a SATA port',
+        detail:
+          'Locate the SATA connectors on the right edge of the board. Prefer ports labeled for your boot drive.',
+      },
+      {
+        title: 'Orient the L-shape',
+        detail:
+          'Match the keyed L-shaped plug to the port — it only fits one way.',
+      },
+      {
+        title: 'Push until seated',
+        detail:
+          'Slide the connector straight in until it feels snug. Do not force or twist.',
+      },
+      {
+        title: 'Connect the drive',
+        detail:
+          'Attach the other end to your SSD/HDD and secure the drive in the case.',
+      },
+    ],
+    safetyTips: [
+      'Unplug power before connecting or disconnecting SATA cables.',
+      'Avoid sharp bends that can crack the cable near the connector.',
+    ],
+    animationKey: 'sata',
+  },
+  frontPanelUsb: {
+    id: 'frontPanelUsb',
+    label: 'Front Panel USB Header',
+    shortLabel: 'FP USB',
+    description:
+      'The front-panel USB header connects case USB ports to the motherboard so front USB ports work.',
+    summary:
+      'Align the keyed USB header plug with the motherboard pins and press evenly until seated.',
+    steps: [
+      {
+        title: 'Locate USB_F or F_USB',
+        detail:
+          'Find the front-panel USB header near the bottom edge of the board (often labeled USB_F / F_PANEL).',
+      },
+      {
+        title: 'Check the key',
+        detail:
+          'One pin is missing on the header — match that gap on the cable plug so it cannot go on backwards.',
+      },
+      {
+        title: 'Seat the connector',
+        detail:
+          'Press straight down evenly across the plug until it sits flush on the pins.',
+      },
+    ],
+    safetyTips: [
+      'Never force a USB header on if the key does not line up.',
+      'USB 2.0 and USB 3.x front-panel connectors are different shapes — do not mix them.',
+    ],
+    animationKey: 'frontPanelUsb',
+  },
+  switches: {
+    id: 'switches',
+    label: 'Front Panel Switches',
+    shortLabel: 'Switches',
+    description:
+      'The case power and reset switches wire to the front-panel header so you can turn the PC on and reboot from the front buttons.',
+    summary:
+      'Connect POWER SW and RESET SW leads to the matching pins on the front-panel header.',
+    steps: [
+      {
+        title: 'Find the front-panel block',
+        detail:
+          'Look for the small pin block labeled PANEL / F_PANEL near the bottom of the board.',
+      },
+      {
+        title: 'Connect POWER SW',
+        detail:
+          'Attach the cable labeled POWER SW (or PWR SW) to the Power Switch pins. Polarity usually does not matter.',
+      },
+      {
+        title: 'Connect RESET SW',
+        detail:
+          'Attach the cable labeled RESET SW to the Reset Switch pins next to Power on the same header.',
+      },
+      {
+        title: 'Check the manual',
+        detail:
+          'Confirm pin pairs against your motherboard diagram — layouts differ by brand.',
+      },
+    ],
+    safetyTips: [
+      'Do not confuse switch pins with HDD LED or Power LED pins.',
+      'Keep front-panel wires clear of fans and sharp case edges.',
+    ],
+    animationKey: 'switches',
+  },
   gpu: {
     id: 'gpu',
     label: 'PCIe x16 (GPU Slot)',

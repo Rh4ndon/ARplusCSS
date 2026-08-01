@@ -24,7 +24,7 @@ const motherboardDescription =
 
 const defaultStatus = 'Motherboard detected';
 
-const INSTALL_ORDER = ['cpu', 'cpuBlock', 'ram', 'eps4', 'atx24', 'sata', 'frontPanelUsb', 'powerSw', 'resetSw', 'gpu'];
+const INSTALL_ORDER = ['cpu', 'cpuBlock', 'ram', 'eps4', 'atx24', 'sata', 'frontPanelUsb', 'switches', 'gpu'];
 
 export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
   const [markerVisible, setMarkerVisible] = useState(false);
@@ -154,6 +154,19 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
       return;
     }
     handleSelectSlot(next);
+    // Without a guide panel there is nothing to close — go straight to placing.
+    if (!componentGuides[next]) {
+      lastComponentId.current = next;
+      setActiveSlot(null);
+      setShowInfo(false);
+      patchARSceneState({
+        activeSlot: null,
+        playInstallAnim: false,
+        placingSlot: next,
+      });
+      setPhase('placing');
+      return;
+    }
     setPhase('guide');
   }, [installedSlots, handleSelectSlot]);
 
