@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   ViroARImageMarker,
   ViroARScene,
+  ViroAnimations,
   ViroMaterials,
   ViroNode,
   ViroQuad,
@@ -53,6 +54,21 @@ export const COMPONENT_MODELS = {
 const DEFAULT_DRAG_Z_MIN = 0.05;
 const INSTALL_ORDER = ['cpu', 'cpuBlock', 'ram', 'eps4', 'atx24', 'sata', 'frontPanelUsb', 'switches', 'gpu'];
 
+/** Per-slot press-in: start elevated on Y+Z, then ease both down into the board. */
+const INSTALL_MOTION = {
+  cpu: { hoverY: 0.045, hoverZ: 0.07, seatMs: 720 },
+  cpuBlock: { hoverY: 0.05, hoverZ: 0.075, seatMs: 780 },
+  ram: { hoverY: 0.05, hoverZ: 0.08, seatMs: 680 },
+  eps4: { hoverY: 0.04, hoverZ: 0.06, seatMs: 560 },
+  atx24: { hoverY: 0.04, hoverZ: 0.06, seatMs: 580 },
+  sata: { hoverY: 0.035, hoverZ: 0.055, seatMs: 540 },
+  frontPanelUsb: { hoverY: 0.035, hoverZ: 0.055, seatMs: 540 },
+  switches: { hoverY: 0.03, hoverZ: 0.05, seatMs: 520 },
+  gpu: { hoverY: 0.055, hoverZ: 0.09, seatMs: 820 },
+};
+
+const DEFAULT_INSTALL_MOTION = { hoverY: 0.045, hoverZ: 0.07, seatMs: 680 };
+
 function getDragZMin(slotId) {
   return COMPONENT_MODELS[slotId]?.dragZMin ?? DEFAULT_DRAG_Z_MIN;
 }
@@ -66,6 +82,43 @@ function getDragStart(hotspot, slotId) {
   const dragZMin = getDragZMin(slotId);
   if (!hotspot) return [0, 0.03, dragZMin];
   return [hotspot.position[0], hotspot.position[1] + 0.03, dragZMin];
+}
+
+function getInstallHoverY(slotId, hotspotY) {
+  const motion = INSTALL_MOTION[slotId] ?? DEFAULT_INSTALL_MOTION;
+  return hotspotY + motion.hoverY;
+}
+
+function getInstallHoverZ(slotId, hotspotZ) {
+  const motion = INSTALL_MOTION[slotId] ?? DEFAULT_INSTALL_MOTION;
+  return Math.max(hotspotZ + motion.hoverZ, getDragZMin(slotId));
+}
+
+function buildInstallAnimations() {
+  const anims = {};
+
+  for (const hotspot of motherboardHotspots) {
+    const motion = INSTALL_MOTION[hotspot.id] ?? DEFAULT_INSTALL_MOTION;
+    const [, ty, tz] = hotspot.position;
+
+    // Ease Y + Z down together — like lowering and seating the part into the board.
+    anims[`${hotspot.id}Install`] = {
+      properties: {
+        positionY: ty,
+        positionZ: tz,
+      },
+      easing: 'EaseInEaseOut',
+      duration: motion.seatMs,
+    };
+  }
+
+  return anims;
+}
+
+ViroAnimations.registerAnimations(buildInstallAnimations());
+
+function installAnimName(slotId) {
+  return `${slotId}Install`;
 }
 
 function ComponentModel({ source, trackLoading = false, onLoadStart, onLoadEnd, ...props }) {
@@ -107,6 +160,8 @@ export function MotherboardARSceneInner() {
   const snappedRef = useRef(false);
   const dragPosRef = useRef(null);
   const [modelPos, setModelPos] = useState([0, 0.03, DEFAULT_DRAG_Z_MIN]);
+  /** While set, the part is playing its seat-into-board animation (no drag). */
+  const [installAnim, setInstallAnim] = useState(null);
 
   useEffect(
     () =>
@@ -118,51 +173,53 @@ export function MotherboardARSceneInner() {
   );
 
   useLayoutEffect(() => {
-    console.log('[LAYOUTEFFECT] deps changed:', { placingSlot, installedSlots: [...installedSlots] });
-    if (placingSlot && !installedSlots.includes(placingSlot)) {
-      console.log('[LAYOUTEFFECT] resetting for slot:', placingSlot);
+    if (placingSlot && !installedSlots.includes(placingSlot) && !installAnim) {
       snappedRef.current = false;
       const hotspot = motherboardHotspots.find((h) => h.id === placingSlot);
       const startPos = getDragStart(hotspot, placingSlot);
       setModelPos(startPos);
       dragPosRef.current = null;
     }
-  }, [placingSlot, installedSlots]);
+  }, [placingSlot, installedSlots, installAnim]);
 
   const nextComponent = INSTALL_ORDER.find((id) => !installedSlots.includes(id));
-  const isSlotAvailable = (id) => id === nextComponent;
 
-  const isPlacing = placingSlot && !installedSlots.includes(placingSlot);
-  const placingModelConfig = isPlacing ? COMPONENT_MODELS[placingSlot] : null;
-  const placingHotspot = isPlacing ? motherboardHotspots.find((h) => h.id === placingSlot) : null;
+  const activeSlotId = installAnim?.slotId ?? (
+    placingSlot && !installedSlots.includes(placingSlot) ? placingSlot : null
+  );
+  const isAnimatingInstall = !!installAnim;
+  const isPlacing = !!activeSlotId && !isAnimatingInstall;
+  const activeModelConfig = activeSlotId ? COMPONENT_MODELS[activeSlotId] : null;
+  const placingHotspot = activeSlotId
+    ? motherboardHotspots.find((h) => h.id === activeSlotId)
+    : null;
 
-  const completeInstall = (slotId) => {
-    if (snappedRef.current) return;
-    snappedRef.current = true;
+  const finishInstallAnimation = (slotId) => {
     notifyInstallComplete(slotId);
+    setInstallAnim(null);
     patchARSceneState({ placingSlot: null });
   };
 
-  const renderCount = useRef(0);
-  renderCount.current += 1;
-  console.log(`[RENDER#${renderCount.current}]`, {
-    placingSlot,
-    installedSlots,
-    isPlacing,
-    modelPos,
-    dragZMin: placingSlot ? getDragZMin(placingSlot) : null,
-  });
+  const completeInstall = (slotId) => {
+    if (snappedRef.current) return;
+    if (!COMPONENT_MODELS[slotId]) return;
+    snappedRef.current = true;
 
-  useLayoutEffect(() => {
-    if (isPlacing && placingSlot && placingModelConfig) {
-      console.log('[RENDER] floating model mounting for', placingSlot);
-    }
-    return () => {
-      if (placingSlot) {
-        console.log('[RENDER] floating model unmounting for', placingSlot);
-      }
-    };
-  }, [isPlacing, placingSlot, placingModelConfig]);
+    const hotspot = motherboardHotspots.find((h) => h.id === slotId);
+    const fromPos = dragPosRef.current ?? modelPos;
+    // Snap over the socket, elevated on Y + Z, then animate both down into the board.
+    const startPos = hotspot
+      ? [
+          hotspot.position[0],
+          Math.max(fromPos[1], getInstallHoverY(slotId, hotspot.position[1])),
+          Math.max(fromPos[2], getInstallHoverZ(slotId, hotspot.position[2])),
+        ]
+      : fromPos;
+
+    setModelPos(startPos);
+    dragPosRef.current = startPos;
+    setInstallAnim({ slotId, fromPos: startPos });
+  };
 
   return (
     <ViroARScene>
@@ -209,6 +266,8 @@ export function MotherboardARSceneInner() {
         {motherboardHotspots.map((hotspot) => {
           const modelConfig = COMPONENT_MODELS[hotspot.id];
           const [w, h] = hotspot.size;
+          const isActivePlaceTarget =
+            activeSlotId === hotspot.id && !installedSlots.includes(hotspot.id);
 
           if (installedSlots.includes(hotspot.id) && modelConfig) {
             return (
@@ -224,7 +283,7 @@ export function MotherboardARSceneInner() {
             );
           }
 
-          if (isPlacing && hotspot.id === placingSlot) {
+          if (isActivePlaceTarget) {
             return (
               <ViroNode key={`hotspot-${hotspot.id}`} position={hotspot.position}>
                 <ViroQuad
@@ -232,10 +291,11 @@ export function MotherboardARSceneInner() {
                   width={w}
                   height={h}
                   materials={['hotspotAvailable']}
-                  opacity={0.6}
+                  opacity={isAnimatingInstall ? 0.35 : 0.6}
                   onClickState={(state) => {
                     if (state !== 3) return;
-                    completeInstall(placingSlot);
+                    if (isAnimatingInstall) return;
+                    completeInstall(activeSlotId);
                   }}
                 />
               </ViroNode>
@@ -245,7 +305,7 @@ export function MotherboardARSceneInner() {
           return null;
         })}
 
-        {nextComponent && COMPONENT_MODELS[nextComponent] && !isPlacing && (
+        {nextComponent && COMPONENT_MODELS[nextComponent] && !activeSlotId && (
           <ViroNode visible={false}>
             <Viro3DObject
               source={COMPONENT_MODELS[nextComponent].source}
@@ -257,27 +317,45 @@ export function MotherboardARSceneInner() {
           </ViroNode>
         )}
 
-        {isPlacing && placingModelConfig && placingHotspot && (
+        {activeSlotId && activeModelConfig && placingHotspot && (
           <ViroNode
-            key={`placing-${placingSlot}`}
+            key={`placing-${activeSlotId}`}
             position={modelPos}
-            dragType="FixedToWorld"
-            onDrag={(pos) => {
-              const clamped = clampDragPosition(pos, placingSlot);
-              setModelPos(clamped);
-              dragPosRef.current = clamped;
-            }}
-            onClickState={(state) => {
-              if (state !== 3) return;
-              completeInstall(placingSlot);
-            }}
+            dragType={isAnimatingInstall ? undefined : 'FixedToWorld'}
+            onDrag={
+              isAnimatingInstall
+                ? undefined
+                : (pos) => {
+                    const clamped = clampDragPosition(pos, activeSlotId);
+                    setModelPos(clamped);
+                    dragPosRef.current = clamped;
+                  }
+            }
+            onClickState={
+              isAnimatingInstall
+                ? undefined
+                : (state) => {
+                    if (state !== 3) return;
+                    completeInstall(activeSlotId);
+                  }
+            }
+            animation={
+              isAnimatingInstall
+                ? {
+                    name: installAnimName(activeSlotId),
+                    run: true,
+                    loop: false,
+                    onFinish: () => finishInstallAnimation(activeSlotId),
+                  }
+                : undefined
+            }
           >
             <ComponentModel
-              trackLoading
-              source={placingModelConfig.source}
-              position={placingModelConfig.position ?? [0, 0, 0]}
-              scale={placingModelConfig.scale}
-              rotation={placingModelConfig.rotation}
+              trackLoading={isPlacing}
+              source={activeModelConfig.source}
+              position={activeModelConfig.position ?? [0, 0, 0]}
+              scale={activeModelConfig.scale}
+              rotation={activeModelConfig.rotation}
             />
           </ViroNode>
         )}
