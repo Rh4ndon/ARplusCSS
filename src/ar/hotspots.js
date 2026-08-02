@@ -32,7 +32,7 @@ export const motherboardHotspots = [
   },
   {
     id: 'gpu',
-    position: [0, 0.02, 0.06, 0.02],
+    position: [0, 0.02, 0.06],
     size: [0.12, 0.02],
     color: '#f97316',
   },

@@ -13,6 +13,7 @@ import {
 import { motherboardHotspots } from './hotspots';
 import { MOTHERBOARD_TARGET_NAME } from './trackingTargets';
 import {
+  DEFAULT_BOARD_ALIGN,
   getARSceneState,
   notifyInstallComplete,
   notifyMarkerFound,
@@ -20,6 +21,7 @@ import {
   notifyModelLoadEnd,
   notifyModelLoadStart,
   notifySelectSlot,
+  notifyWrongPlacement,
   patchARSceneState,
   subscribeARSceneState,
 } from './arSceneBridge';
@@ -33,14 +35,10 @@ ViroMaterials.createMaterials({
     diffuseColor: '#3b82f6',
     lightingModel: 'Constant',
   },
-  hotspotLocked: {
-    diffuseColor: '#475569',
-    lightingModel: 'Constant',
-  },
 });
 
 export const COMPONENT_MODELS = {
-  cpu: { source: require('../../assets/models/components/cpu.glb'), position: [-0.005, -0.02, -0.008], scale: [0.040, 0.040, 0.040], rotation: [184, 0, 66], dragZMin: 0.08},
+  cpu: { source: require('../../assets/models/components/cpu.glb'), position: [-0.005, -0.02, -0.008], scale: [0.040, 0.040, 0.040], rotation: [184, 0, 66], dragZMin: 0.1},
   cpuBlock: { source: require('../../assets/models/components/cpu-block.glb'), position: [-0.006, 0.01, -0.001], scale: [0.0065, 0.0065, 0.0065], rotation: [180, 0, 185], dragZMin: 0.04 },
   ram: { source: require('../../assets/models/components/ram.glb'), position: [-0.005, 0.0020, 0.015], scale: [0.00129, 0.00129, 0.00129], rotation: [91.5, 91, 9], dragZMin: 0.1 },
   eps4: { source: require('../../assets/models/components/4pin.glb'), position: [-0.006, 0.01, 0.001], scale: [0.00129, 0.00129, 0.00129], rotation: [-91.5, -180, 9], dragZMin: 0.1 },
@@ -53,6 +51,10 @@ export const COMPONENT_MODELS = {
 
 const DEFAULT_DRAG_Z_MIN = 0.05;
 const INSTALL_ORDER = ['cpu', 'cpuBlock', 'ram', 'eps4', 'atx24', 'sata', 'frontPanelUsb', 'switches', 'gpu'];
+/** Fraction of the component footprint that must overlap the target hotspot (XZ plane). */
+const PLACEMENT_COVERAGE_THRESHOLD = 0.5;
+/** Hotspots closer than this (m) are treated as the same socket (e.g. cpu / cpuBlock). */
+const COINCIDENT_HOTSPOT_M = 0.012;
 
 /** Per-slot press-in: start elevated on Y+Z, then ease both down into the board. */
 const INSTALL_MOTION = {
@@ -74,14 +76,16 @@ function getDragZMin(slotId) {
 }
 
 function clampDragPosition(pos, slotId) {
-  const dragZMin = getDragZMin(slotId);
-  return [pos[0], pos[1], Math.max(pos[2], dragZMin)];
+  // The FixedToPlane drag already keeps the part on a plane above the board
+  // (Y = dragZMin). This is only a safety net for the placement position.
+  return [pos[0], Math.max(pos[1], getDragZMin(slotId)), pos[2]];
 }
 
 function getDragStart(hotspot, slotId) {
   const dragZMin = getDragZMin(slotId);
-  if (!hotspot) return [0, 0.03, dragZMin];
-  return [hotspot.position[0], hotspot.position[1] + 0.03, dragZMin];
+  // Hold above board center so the learner must drag onto the correct slot.
+  if (!hotspot) return [0, dragZMin, 0];
+  return [0, Math.max(hotspot.position[1] + 0.04, dragZMin), 0];
 }
 
 function getInstallHoverY(slotId, hotspotY) {
@@ -91,7 +95,84 @@ function getInstallHoverY(slotId, hotspotY) {
 
 function getInstallHoverZ(slotId, hotspotZ) {
   const motion = INSTALL_MOTION[slotId] ?? DEFAULT_INSTALL_MOTION;
-  return Math.max(hotspotZ + motion.hoverZ, getDragZMin(slotId));
+  return hotspotZ + motion.hoverZ;
+}
+
+function hotspotBoundsXZ(hotspot) {
+  const [cx, , cz] = hotspot.position;
+  const [w, d] = hotspot.size;
+  return {
+    minX: cx - w / 2,
+    maxX: cx + w / 2,
+    minZ: cz - d / 2,
+    maxZ: cz + d / 2,
+  };
+}
+
+function rectArea(bounds) {
+  return Math.max(0, bounds.maxX - bounds.minX) * Math.max(0, bounds.maxZ - bounds.minZ);
+}
+
+function intersectArea(a, b) {
+  const ix = Math.max(0, Math.min(a.maxX, b.maxX) - Math.max(a.minX, b.minX));
+  const iz = Math.max(0, Math.min(a.maxZ, b.maxZ) - Math.max(a.minZ, b.minZ));
+  return ix * iz;
+}
+
+/**
+ * How much of the component footprint (centered on drop pos, sized like its slot)
+ * overlaps a hotspot on the motherboard XZ plane.
+ */
+function coverageOnHotspot(componentPos, footprintSize, hotspot) {
+  const [cx, , cz] = componentPos;
+  const [w, d] = footprintSize;
+  const componentBounds = {
+    minX: cx - w / 2,
+    maxX: cx + w / 2,
+    minZ: cz - d / 2,
+    maxZ: cz + d / 2,
+  };
+  const area = rectArea(componentBounds);
+  if (area <= 0) return 0;
+  return intersectArea(componentBounds, hotspotBoundsXZ(hotspot)) / area;
+}
+
+function hotspotsCoincide(a, b) {
+  const dx = a.position[0] - b.position[0];
+  const dz = a.position[2] - b.position[2];
+  return Math.hypot(dx, dz) < COINCIDENT_HOTSPOT_M;
+}
+
+/**
+ * @returns {'correct' | 'wrong' | 'miss'}
+ */
+function evaluatePlacement(pos, slotId) {
+  const intended = motherboardHotspots.find((h) => h.id === slotId);
+  if (!intended) return { result: 'miss' };
+
+  const footprint = intended.size;
+  const correctCoverage = coverageOnHotspot(pos, footprint, intended);
+  if (correctCoverage >= PLACEMENT_COVERAGE_THRESHOLD) {
+    return { result: 'correct', coverage: correctCoverage };
+  }
+
+  let bestWrong = null;
+  let bestWrongCoverage = 0;
+  for (const hotspot of motherboardHotspots) {
+    if (hotspot.id === slotId) continue;
+    if (hotspotsCoincide(hotspot, intended)) continue;
+    const coverage = coverageOnHotspot(pos, footprint, hotspot);
+    if (coverage > bestWrongCoverage) {
+      bestWrongCoverage = coverage;
+      bestWrong = hotspot;
+    }
+  }
+
+  if (bestWrong && bestWrongCoverage >= PLACEMENT_COVERAGE_THRESHOLD) {
+    return { result: 'wrong', hotspotId: bestWrong.id, coverage: bestWrongCoverage };
+  }
+
+  return { result: 'miss', coverage: correctCoverage };
 }
 
 function buildInstallAnimations() {
@@ -157,6 +238,12 @@ export function MotherboardARSceneInner() {
   const [placingSlot, setPlacingSlot] = useState(
     () => getARSceneState().placingSlot,
   );
+  const [boardAlign, setBoardAlign] = useState(
+    () => getARSceneState().boardAlign ?? DEFAULT_BOARD_ALIGN,
+  );
+  const [boardLocked, setBoardLocked] = useState(
+    () => getARSceneState().boardLocked,
+  );
   const snappedRef = useRef(false);
   const dragPosRef = useRef(null);
   const [modelPos, setModelPos] = useState([0, 0.03, DEFAULT_DRAG_Z_MIN]);
@@ -168,6 +255,8 @@ export function MotherboardARSceneInner() {
       subscribeARSceneState((s) => {
         setInstalledSlots(s.installedSlots);
         setPlacingSlot(s.placingSlot);
+        if (s.boardAlign) setBoardAlign(s.boardAlign);
+        setBoardLocked(!!s.boardLocked);
       }),
     [],
   );
@@ -178,7 +267,7 @@ export function MotherboardARSceneInner() {
       const hotspot = motherboardHotspots.find((h) => h.id === placingSlot);
       const startPos = getDragStart(hotspot, placingSlot);
       setModelPos(startPos);
-      dragPosRef.current = null;
+      dragPosRef.current = startPos;
     }
   }, [placingSlot, installedSlots, installAnim]);
 
@@ -221,6 +310,23 @@ export function MotherboardARSceneInner() {
     setInstallAnim({ slotId, fromPos: startPos });
   };
 
+  /** Release / drop: ≥50% overlap on intended slot installs; wrong slot shows a mistake. */
+  const tryPlaceComponent = (slotId) => {
+    if (snappedRef.current || isAnimatingInstall) return;
+    const pos = dragPosRef.current ?? modelPos;
+    const verdict = evaluatePlacement(pos, slotId);
+
+    if (verdict.result === 'correct') {
+      completeInstall(slotId);
+      return;
+    }
+    if (verdict.result === 'wrong') {
+      notifyWrongPlacement(slotId, verdict.hotspotId);
+      return;
+    }
+    notifyWrongPlacement(slotId);
+  };
+
   return (
     <ViroARScene>
       <ViroAmbientLight color="#ffffff" intensity={350} />
@@ -244,18 +350,25 @@ export function MotherboardARSceneInner() {
         onAnchorUpdated={() => notifyMarkerFound()}
         onAnchorRemoved={() => notifyMarkerLost()}
       >
+        {/* Parent node carries manual align offsets so board + hotspots move together. */}
+        <ViroNode
+          position={boardAlign.position}
+          rotation={boardAlign.rotation}
+          scale={boardAlign.scale}
+        >
         <Viro3DObject
           source={require('../../assets/models/motherboard/motherboard.glb')}
           type="GLB"
           position={[-0.01, 0.01, 0]}
           scale={[0.25, 0.25, 0.25]}
           rotation={[1, 181, 3]}
-          ignoreEventHandling={!!placingSlot}
+          ignoreEventHandling={!!placingSlot || !boardLocked}
           onLoadStart={() => console.log('[LOAD] motherboard onLoadStart')}
           onLoadEnd={() => console.log('[LOAD] motherboard onLoadEnd')}
           onError={(e) => console.log('[LOAD] motherboard onError', e)}
           onClickState={(state) => {
             if (state !== 3) return;
+            if (!boardLocked) return;
             if (placingSlot) return;
             if (nextComponent) {
               notifySelectSlot(nextComponent);
@@ -266,7 +379,7 @@ export function MotherboardARSceneInner() {
         {motherboardHotspots.map((hotspot) => {
           const modelConfig = COMPONENT_MODELS[hotspot.id];
           const [w, h] = hotspot.size;
-          const isActivePlaceTarget =
+          const isIntendedTarget =
             activeSlotId === hotspot.id && !installedSlots.includes(hotspot.id);
 
           if (installedSlots.includes(hotspot.id) && modelConfig) {
@@ -283,7 +396,7 @@ export function MotherboardARSceneInner() {
             );
           }
 
-          if (isActivePlaceTarget) {
+          if (isIntendedTarget) {
             return (
               <ViroNode key={`hotspot-${hotspot.id}`} position={hotspot.position}>
                 <ViroQuad
@@ -295,6 +408,7 @@ export function MotherboardARSceneInner() {
                   onClickState={(state) => {
                     if (state !== 3) return;
                     if (isAnimatingInstall) return;
+                    // Tapping the highlighted slot counts as a correct place.
                     completeInstall(activeSlotId);
                   }}
                 />
@@ -321,7 +435,18 @@ export function MotherboardARSceneInner() {
           <ViroNode
             key={`placing-${activeSlotId}`}
             position={modelPos}
-            dragType={isAnimatingInstall ? undefined : 'FixedToWorld'}
+            dragType={isAnimatingInstall ? undefined : 'FixedToPlane'}
+            dragPlane={
+              isAnimatingInstall
+                ? undefined
+                : {
+                    // Keep the part gliding on a plane above the board so it
+                    // can never sink under / hide behind the motherboard.
+                    planePoint: [0, getDragZMin(activeSlotId), 0],
+                    planeNormal: [0, 1, 0],
+                    maxDistance: 2,
+                  }
+            }
             onDrag={
               isAnimatingInstall
                 ? undefined
@@ -335,8 +460,9 @@ export function MotherboardARSceneInner() {
               isAnimatingInstall
                 ? undefined
                 : (state) => {
+                    // Finger-up after drag/tap: score placement (≥50% overlap).
                     if (state !== 3) return;
-                    completeInstall(activeSlotId);
+                    tryPlaceComponent(activeSlotId);
                   }
             }
             animation={
@@ -359,6 +485,7 @@ export function MotherboardARSceneInner() {
             />
           </ViroNode>
         )}
+        </ViroNode>
       </ViroARImageMarker>
     </ViroARScene>
   );

@@ -5,15 +5,21 @@ import { MotherboardARSceneInner } from './MotherboardARSceneInner';
 import { registerMotherboardTrackingTarget } from './trackingTargets';
 import { componentGuides } from '../data/componentGuides';
 import { InstallGuidePanel } from '../components/InstallGuidePanel';
+import { MotherboardAlignPanel } from '../components/MotherboardAlignPanel';
 import { ARHud } from '../components/ARHud';
 import {
+  getARSceneState,
+  lockBoardAlign,
   notifyDismissError,
   notifyDismissSuccess,
   patchARSceneState,
   registerARSceneHandlers,
+  resetBoardAlign,
   subscribeARSceneState,
+  unlockBoardAlign,
 } from './arSceneBridge';
 import { colors } from '../theme/colors';
+import { getBoardState, saveBoardState } from '../utils/boardStateStorage';
 
 const stableARScene = {
   scene: MotherboardARSceneInner,
@@ -36,7 +42,7 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
   const [statusLabel, setStatusLabel] = useState(defaultStatus);
   const [showInfo, setShowInfo] = useState(false);
   const [installedSlots, setInstalledSlots] = useState([]);
-  const [phase, setPhase] = useState('start');
+  const [phase, setPhase] = useState('align');
   const lastComponentId = useRef(null);
   const prevInstalledCount = useRef(0);
   const errorOpacity = useRef(new Animated.Value(0)).current;
@@ -48,6 +54,24 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
     registerMotherboardTrackingTarget({
       sourceUri: markerUri,
       physicalWidth: markerPhysicalWidth,
+    });
+    let cancelled = false;
+    // Restore a previously locked board pose across reloads so the position
+    // does not need to be re-assigned every time.
+    getBoardState().then((saved) => {
+      if (cancelled) return;
+      if (saved && saved.boardLocked && saved.boardAlign) {
+        patchARSceneState({
+          boardLocked: true,
+          boardAlign: saved.boardAlign,
+        });
+        setPhase('start');
+        setStatusLabel('Position locked — tap Start');
+      } else {
+        // Fresh AR session always starts in align mode.
+        unlockBoardAlign();
+        setPhase('align');
+      }
     });
     const unsub = subscribeARSceneState((s) => {
       if (s.installError !== undefined) setInstallError(s.installError ?? null);
@@ -63,6 +87,7 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
       }
     });
     return () => {
+      cancelled = true;
       unsub();
       patchARSceneState({ activeSlot: null, playInstallAnim: false });
     };
@@ -170,13 +195,30 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
     setPhase('guide');
   }, [installedSlots, handleSelectSlot]);
 
+  const handleLockBoard = useCallback(() => {
+    lockBoardAlign();
+    // Cache the locked pose so a reload keeps the board in place.
+    const current = getARSceneState();
+    saveBoardState({
+      boardLocked: true,
+      boardAlign: current.boardAlign,
+    });
+    setPhase('start');
+    setStatusLabel('Position locked — tap Start');
+  }, []);
+
   const handleReset = useCallback(() => {
+    if (phase === 'align') {
+      resetBoardAlign();
+      return;
+    }
     prevInstalledCount.current = 0;
     setInstalledSlots([]);
     setActiveSlot(null);
     setShowInfo(false);
     setDescription(motherboardDescription);
-    setStatusLabel(defaultStatus);
+    setStatusLabel('Position locked — tap Start');
+    // Lesson reset keeps the locked board pose.
     setPhase('start');
     patchARSceneState({
       installedSlots: [],
@@ -184,7 +226,7 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
       activeSlot: null,
       playInstallAnim: false,
     });
-  }, []);
+  }, [phase]);
 
   const closeGuide = useCallback(() => {
     if (!activeSlot) return;
@@ -224,6 +266,8 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
   }, [activeSlot, reopenGuide]);
 
   const guide = activeSlot ? componentGuides[activeSlot] : null;
+  const showAlign =
+    phase === 'align' && markerVisible && !guide && !modelsLoading;
   const showStart = phase === 'start' && markerVisible && !guide && !modelsLoading;
   const showNext = phase === 'installed' && !modelsLoading;
   const showDone = phase === 'done';
@@ -233,14 +277,16 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
       <ViroARSceneNavigator autofocus initialScene={stableARScene} style={styles.fill} />
         <ARHud
           markerDetected={markerVisible}
-          detectedHint={statusLabel}
+          scanningHint="Point camera at motherboard marker"
+          detectedHint={phase === 'align' ? 'Align the motherboard' : statusLabel}
           description={description}
-          showInfo={showInfo}
+          showInfo={showInfo && phase !== 'align'}
           phase={phase}
           onReset={handleReset}
           onToggleInfo={handleToggleInfo}
           onExit={onExit}
         />
+      {showAlign && <MotherboardAlignPanel onLock={handleLockBoard} />}
       {showStart && (
         <Pressable style={styles.actionBtn} onPress={handleProceed}>
           <Text style={styles.actionBtnText}>Start</Text>
