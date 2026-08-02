@@ -28,6 +28,8 @@ const state = {
   installError: null,
   installSuccess: null,
   placingSlot: null,
+  /** Command sent from the React Native placement controls to the AR scene. */
+  placementControl: null,
   pendingModelLoads: 0,
   /** False until user locks the motherboard after manual align. */
   boardLocked: false,
@@ -105,6 +107,31 @@ export function notifyInstallComplete(slotId) {
       installError: null,
     });
   }
+}
+
+function sendPlacementControl(type, payload = {}) {
+  patchARSceneState({
+    placementControl: {
+      type,
+      ...payload,
+      id: Date.now() + Math.random(),
+    },
+  });
+}
+
+/** Move the currently held component in marker-local meters. */
+export function movePlacement(dx, dz) {
+  sendPlacementControl('move', { dx, dz });
+}
+
+/** Score the currently held component at its controlled position. */
+export function confirmPlacement() {
+  sendPlacementControl('place');
+}
+
+/** Return the currently held component to its safe starting position. */
+export function resetPlacement() {
+  sendPlacementControl('reset');
 }
 
 /** Learning feedback when a part is released on the wrong slot or off-target. */

@@ -26,35 +26,35 @@ export const motherboardHotspots = [
   },
   {
     id: 'eps4',
-    position: [-0.06, 0.03, -0.09],
-    size: [0.02, 0.02],
+    position: [-0.07, 0.02, -0.1],
+    size: [0.03, 0.03],
     color: '#a78bfa',
   },
   {
     id: 'gpu',
-    position: [0, 0.02, 0.06],
-    size: [0.12, 0.02],
+    position: [-0.01, 0.02, 0.075],
+    size: [0.18, 0.05],
     color: '#f97316',
   },
   {
     id: 'sata',
     // Right edge, below ATX 24-pin (ATX is at z≈0.015)
     position: [0.062, 0.03, 0.11],
-    size: [0.04, 0.019],
+    size: [0.04, 0.03],
     color: '#84cc16',
   },
   {
     id: 'frontPanelUsb',
     // Bottom-right front-panel header area
     position: [0.01, 0.05, 0.11],
-    size: [0.02, 0.01],
+    size: [0.02, 0.02],
     color: '#06b6d4',
   },
   {
     id: 'switches',
     // Front-panel power + reset pins — left of SATA, near bottom edge
-    position: [0.035, 0.02, 0.115],
-    size: [0.02, 0.01],
+    position: [0.025, 0.02, 0.115],
+    size: [0.03, 0.02],
     color: '#f43f5e',
   },
 ];

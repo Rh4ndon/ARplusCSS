@@ -8,12 +8,15 @@ import { InstallGuidePanel } from '../components/InstallGuidePanel';
 import { MotherboardAlignPanel } from '../components/MotherboardAlignPanel';
 import { ARHud } from '../components/ARHud';
 import {
+  confirmPlacement,
   getARSceneState,
   lockBoardAlign,
+  movePlacement,
   notifyDismissError,
   notifyDismissSuccess,
   patchARSceneState,
   registerARSceneHandlers,
+  resetPlacement,
   resetBoardAlign,
   subscribeARSceneState,
   unlockBoardAlign,
@@ -31,6 +34,7 @@ const motherboardDescription =
 const defaultStatus = 'Motherboard detected';
 
 const INSTALL_ORDER = ['cpu', 'cpuBlock', 'ram', 'eps4', 'atx24', 'sata', 'frontPanelUsb', 'switches', 'gpu'];
+const PLACEMENT_STEP_M = 0.01;
 
 export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
   const [markerVisible, setMarkerVisible] = useState(false);
@@ -271,6 +275,7 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
   const showStart = phase === 'start' && markerVisible && !guide && !modelsLoading;
   const showNext = phase === 'installed' && !modelsLoading;
   const showDone = phase === 'done';
+  const showPlacementControls = phase === 'placing' && markerVisible && !modelsLoading;
 
   return (
     <View style={styles.fill}>
@@ -296,6 +301,51 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
         <Pressable style={styles.actionBtn} onPress={handleProceed}>
           <Text style={styles.actionBtnText}>Next</Text>
         </Pressable>
+      )}
+      {showPlacementControls && (
+        <View style={styles.placementControls}>
+          <Text style={styles.placementHint}>Move the component over the blue slot</Text>
+          <View style={styles.dpad}>
+            <Pressable
+              accessibilityLabel="Move component up"
+              style={styles.moveBtn}
+              onPress={() => movePlacement(0, -PLACEMENT_STEP_M)}
+            >
+              <Text style={styles.moveBtnText}>↑</Text>
+            </Pressable>
+            <View style={styles.dpadRow}>
+              <Pressable
+                accessibilityLabel="Move component left"
+                style={styles.moveBtn}
+                onPress={() => movePlacement(-PLACEMENT_STEP_M, 0)}
+              >
+                <Text style={styles.moveBtnText}>←</Text>
+              </Pressable>
+              <Pressable
+                accessibilityLabel="Move component right"
+                style={styles.moveBtn}
+                onPress={() => movePlacement(PLACEMENT_STEP_M, 0)}
+              >
+                <Text style={styles.moveBtnText}>→</Text>
+              </Pressable>
+            </View>
+            <Pressable
+              accessibilityLabel="Move component down"
+              style={styles.moveBtn}
+              onPress={() => movePlacement(0, PLACEMENT_STEP_M)}
+            >
+              <Text style={styles.moveBtnText}>↓</Text>
+            </Pressable>
+          </View>
+          <View style={styles.placementActions}>
+            <Pressable style={styles.resetPlacementBtn} onPress={resetPlacement}>
+              <Text style={styles.resetPlacementText}>Reset</Text>
+            </Pressable>
+            <Pressable style={styles.placeBtn} onPress={confirmPlacement}>
+              <Text style={styles.placeBtnText}>Place</Text>
+            </Pressable>
+          </View>
+        </View>
       )}
       {showDone && (
         <View style={styles.congratsOverlay}>
@@ -356,6 +406,75 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 18,
     fontWeight: '700',
+  },
+  placementControls: {
+    position: 'absolute',
+    bottom: 30,
+    alignSelf: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(10,14,23,0.92)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 12,
+    gap: 8,
+    zIndex: 80,
+    elevation: 8,
+  },
+  placementHint: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  dpad: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  dpadRow: {
+    flexDirection: 'row',
+    gap: 54,
+  },
+  moveBtn: {
+    width: 42,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  moveBtnText: {
+    color: '#ffffff',
+    fontSize: 22,
+    fontWeight: '700',
+    lineHeight: 25,
+  },
+  placementActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  resetPlacementBtn: {
+    backgroundColor: colors.surfaceElevated,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  resetPlacementText: {
+    color: colors.text,
+    fontWeight: '700',
+  },
+  placeBtn: {
+    backgroundColor: colors.success,
+    borderRadius: 10,
+    paddingHorizontal: 26,
+    paddingVertical: 10,
+  },
+  placeBtnText: {
+    color: '#042f2e',
+    fontWeight: '800',
   },
   congratsOverlay: {
     ...StyleSheet.absoluteFillObject,

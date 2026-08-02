@@ -38,18 +38,24 @@ ViroMaterials.createMaterials({
 });
 
 export const COMPONENT_MODELS = {
-  cpu: { source: require('../../assets/models/components/cpu.glb'), position: [-0.005, -0.02, -0.008], scale: [0.040, 0.040, 0.040], rotation: [184, 0, 66], dragZMin: 0.1},
+  cpu: { source: require('../../assets/models/components/cpu.glb'), position: [-0.005, -0.02, -0.008], scale: [0.040, 0.040, 0.040], rotation: [184, 0, 66], dragZMin: 0.1 },
   cpuBlock: { source: require('../../assets/models/components/cpu-block.glb'), position: [-0.006, 0.01, -0.001], scale: [0.0065, 0.0065, 0.0065], rotation: [180, 0, 185], dragZMin: 0.04 },
   ram: { source: require('../../assets/models/components/ram.glb'), position: [-0.005, 0.0020, 0.015], scale: [0.00129, 0.00129, 0.00129], rotation: [91.5, 91, 9], dragZMin: 0.1 },
-  eps4: { source: require('../../assets/models/components/4pin.glb'), position: [-0.006, 0.01, 0.001], scale: [0.00129, 0.00129, 0.00129], rotation: [-91.5, -180, 9], dragZMin: 0.1 },
+  eps4: { source: require('../../assets/models/components/4pin.glb'), position: [-0.001, 0.01, -0.003], scale: [0.00129, 0.00129, 0.00129], rotation: [-91.5, -180, 9], dragZMin: 0.1 },
   atx24: { source: require('../../assets/models/components/24pin.glb'), position: [0, 0, 0], scale: [1, 1, 1], rotation: [91.5, 91, 9], dragZMin: 0.1 },
-  sata: { source: require('../../assets/models/components/sata-cable.glb'), position: [-0.01, 0.001, 0.008], scale: [0.025, 0.025, 0.025], rotation: [85, 0, 0], dragZMin: 0.1 },
-  frontPanelUsb: { source: require('../../assets/models/components/front-panel-usb.glb'), position: [-0.008, -0.03, 0.008], scale: [0.06, 0.06, 0.06], rotation: [90, 0, -85], dragZMin: 0.08 },
-  switches: { source: require('../../assets/models/components/switches.glb'), position: [0, 0.005, 0], scale: [0.12, 0.12, 0.12], rotation: [90, 0, 0], dragZMin: 0.08 },
-  gpu: { source: require('../../assets/models/components/graphics-card.glb'), position: [0.06, 0.099, -0.006], scale: [0.018, 0.018, 0.018], rotation: [-90, 180, 0], dragZMin: 0.12 },
+  sata: { source: require('../../assets/models/components/sata-cable.glb'), position: [-0.012, -0.01, 0.008], scale: [0.025, 0.025, 0.025], rotation: [85, 0, 0], dragZMin: 0.1, placementTolerance: 0.2 },
+  frontPanelUsb: { source: require('../../assets/models/components/front-panel-usb.glb'), position: [-0.008, -0.03, 0.008], scale: [0.06, 0.06, 0.06], rotation: [90, 0, -85], dragZMin: 0.08, placementTolerance: 0.2 },
+  switches: { source: require('../../assets/models/components/switches.glb'), position: [0.009, 0.005, -0.001], scale: [0.12, 0.12, 0.12], rotation: [90, 0, 0], dragZMin: 0.08, placementTolerance: 0.2 },
+  gpu: { source: require('../../assets/models/components/graphics-card.glb'), position: [0.065, 0.099, -0.02], scale: [0.018, 0.018, 0.018], rotation: [-90, 180, 0], dragZMin: 0.12 },
 };
 
 const DEFAULT_DRAG_Z_MIN = 0.05;
+const CONTROL_STEP_BOUNDS = {
+  minX: -0.11,
+  maxX: 0.12,
+  minZ: -0.14,
+  maxZ: 0.15,
+};
 const INSTALL_ORDER = ['cpu', 'cpuBlock', 'ram', 'eps4', 'atx24', 'sata', 'frontPanelUsb', 'switches', 'gpu'];
 /** Fraction of the component footprint that must overlap the target hotspot (XZ plane). */
 const PLACEMENT_COVERAGE_THRESHOLD = 0.5;
@@ -75,17 +81,27 @@ function getDragZMin(slotId) {
   return COMPONENT_MODELS[slotId]?.dragZMin ?? DEFAULT_DRAG_Z_MIN;
 }
 
-function clampDragPosition(pos, slotId) {
-  // The FixedToPlane drag already keeps the part on a plane above the board
-  // (Y = dragZMin). This is only a safety net for the placement position.
-  return [pos[0], Math.max(pos[1], getDragZMin(slotId)), pos[2]];
+function getPlacementTolerance(slotId) {
+  return COMPONENT_MODELS[slotId]?.placementTolerance
+    ?? PLACEMENT_COVERAGE_THRESHOLD;
+}
+
+function clampControlledPosition(pos, fallbackPos) {
+  if (!Array.isArray(pos) || pos.length !== 3 || !pos.every(Number.isFinite)) {
+    return fallbackPos ?? [0, 0.08, 0];
+  }
+  return [
+    Math.max(CONTROL_STEP_BOUNDS.minX, Math.min(CONTROL_STEP_BOUNDS.maxX, pos[0])),
+    pos[1],
+    Math.max(CONTROL_STEP_BOUNDS.minZ, Math.min(CONTROL_STEP_BOUNDS.maxZ, pos[2])),
+  ];
 }
 
 function getDragStart(hotspot, slotId) {
-  const dragZMin = getDragZMin(slotId);
-  // Hold above board center so the learner must drag onto the correct slot.
-  if (!hotspot) return [0, dragZMin, 0];
-  return [0, Math.max(hotspot.position[1] + 0.04, dragZMin), 0];
+  // The held component stays above the board; only X/Z are changed by the
+  // placement controls. Its installed transform remains untouched.
+  if (!hotspot) return [0, 0.08, 0];
+  return [0, Math.max(hotspot.position[1] + 0.06, 0.08), 0];
 }
 
 function getInstallHoverY(slotId, hotspotY) {
@@ -95,7 +111,7 @@ function getInstallHoverY(slotId, hotspotY) {
 
 function getInstallHoverZ(slotId, hotspotZ) {
   const motion = INSTALL_MOTION[slotId] ?? DEFAULT_INSTALL_MOTION;
-  return hotspotZ + motion.hoverZ;
+  return Math.max(hotspotZ + motion.hoverZ, getDragZMin(slotId));
 }
 
 function hotspotBoundsXZ(hotspot) {
@@ -151,8 +167,11 @@ function evaluatePlacement(pos, slotId) {
   if (!intended) return { result: 'miss' };
 
   const footprint = intended.size;
+  const placementTolerance = getPlacementTolerance(slotId);
+  // Score the socket/connector origin. Some models, notably the GPU, have a
+  // local visual offset because the card extends away from its socket.
   const correctCoverage = coverageOnHotspot(pos, footprint, intended);
-  if (correctCoverage >= PLACEMENT_COVERAGE_THRESHOLD) {
+  if (correctCoverage >= placementTolerance) {
     return { result: 'correct', coverage: correctCoverage };
   }
 
@@ -168,7 +187,7 @@ function evaluatePlacement(pos, slotId) {
     }
   }
 
-  if (bestWrong && bestWrongCoverage >= PLACEMENT_COVERAGE_THRESHOLD) {
+  if (bestWrong && bestWrongCoverage >= placementTolerance) {
     return { result: 'wrong', hotspotId: bestWrong.id, coverage: bestWrongCoverage };
   }
 
@@ -238,6 +257,9 @@ export function MotherboardARSceneInner() {
   const [placingSlot, setPlacingSlot] = useState(
     () => getARSceneState().placingSlot,
   );
+  const [placementControl, setPlacementControl] = useState(
+    () => getARSceneState().placementControl,
+  );
   const [boardAlign, setBoardAlign] = useState(
     () => getARSceneState().boardAlign ?? DEFAULT_BOARD_ALIGN,
   );
@@ -246,6 +268,7 @@ export function MotherboardARSceneInner() {
   );
   const snappedRef = useRef(false);
   const dragPosRef = useRef(null);
+  const handledControlRef = useRef(null);
   const [modelPos, setModelPos] = useState([0, 0.03, DEFAULT_DRAG_Z_MIN]);
   /** While set, the part is playing its seat-into-board animation (no drag). */
   const [installAnim, setInstallAnim] = useState(null);
@@ -255,6 +278,7 @@ export function MotherboardARSceneInner() {
       subscribeARSceneState((s) => {
         setInstalledSlots(s.installedSlots);
         setPlacingSlot(s.placingSlot);
+        setPlacementControl(s.placementControl);
         if (s.boardAlign) setBoardAlign(s.boardAlign);
         setBoardLocked(!!s.boardLocked);
       }),
@@ -326,6 +350,37 @@ export function MotherboardARSceneInner() {
     }
     notifyWrongPlacement(slotId);
   };
+
+  useEffect(() => {
+    if (!placementControl || placementControl.id === handledControlRef.current) return;
+    handledControlRef.current = placementControl.id;
+    if (!activeSlotId || isAnimatingInstall) return;
+
+    const hotspot = motherboardHotspots.find((h) => h.id === activeSlotId);
+    if (placementControl.type === 'reset') {
+      const startPos = getDragStart(hotspot, activeSlotId);
+      setModelPos(startPos);
+      dragPosRef.current = startPos;
+      return;
+    }
+    if (placementControl.type === 'move') {
+      const currentPos = dragPosRef.current ?? modelPos;
+      const nextPos = clampControlledPosition(
+        [
+          currentPos[0] + placementControl.dx,
+          currentPos[1],
+          currentPos[2] + placementControl.dz,
+        ],
+        currentPos,
+      );
+      setModelPos(nextPos);
+      dragPosRef.current = nextPos;
+      return;
+    }
+    if (placementControl.type === 'place') {
+      tryPlaceComponent(activeSlotId);
+    }
+  }, [placementControl, activeSlotId, isAnimatingInstall, modelPos]);
 
   return (
     <ViroARScene>
@@ -405,12 +460,6 @@ export function MotherboardARSceneInner() {
                   height={h}
                   materials={['hotspotAvailable']}
                   opacity={isAnimatingInstall ? 0.35 : 0.6}
-                  onClickState={(state) => {
-                    if (state !== 3) return;
-                    if (isAnimatingInstall) return;
-                    // Tapping the highlighted slot counts as a correct place.
-                    completeInstall(activeSlotId);
-                  }}
                 />
               </ViroNode>
             );
@@ -435,36 +484,6 @@ export function MotherboardARSceneInner() {
           <ViroNode
             key={`placing-${activeSlotId}`}
             position={modelPos}
-            dragType={isAnimatingInstall ? undefined : 'FixedToPlane'}
-            dragPlane={
-              isAnimatingInstall
-                ? undefined
-                : {
-                    // Keep the part gliding on a plane above the board so it
-                    // can never sink under / hide behind the motherboard.
-                    planePoint: [0, getDragZMin(activeSlotId), 0],
-                    planeNormal: [0, 1, 0],
-                    maxDistance: 2,
-                  }
-            }
-            onDrag={
-              isAnimatingInstall
-                ? undefined
-                : (pos) => {
-                    const clamped = clampDragPosition(pos, activeSlotId);
-                    setModelPos(clamped);
-                    dragPosRef.current = clamped;
-                  }
-            }
-            onClickState={
-              isAnimatingInstall
-                ? undefined
-                : (state) => {
-                    // Finger-up after drag/tap: score placement (≥50% overlap).
-                    if (state !== 3) return;
-                    tryPlaceComponent(activeSlotId);
-                  }
-            }
             animation={
               isAnimatingInstall
                 ? {
@@ -482,6 +501,7 @@ export function MotherboardARSceneInner() {
               position={activeModelConfig.position ?? [0, 0, 0]}
               scale={activeModelConfig.scale}
               rotation={activeModelConfig.rotation}
+              renderingOrder={2}
             />
           </ViroNode>
         )}
