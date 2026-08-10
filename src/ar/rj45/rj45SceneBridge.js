@@ -2,6 +2,10 @@ const state = {
   wiringType: 'straight',
   activeStep: null,
   playInstallAnim: false,
+  wiredPins: [null, null, null, null, null, null, null, null],
+  selectedWire: null,
+  wireError: null,
+  wireSuccess: false,
 };
 
 const stateListeners = new Set();
@@ -49,5 +53,46 @@ export function resetRj45SceneState() {
     wiringType: 'straight',
     activeStep: null,
     playInstallAnim: false,
+    wiredPins: [null, null, null, null, null, null, null, null],
+    selectedWire: null,
+    wireError: null,
+    wireSuccess: false,
+  });
+}
+
+export function notifyWireSelect(wireId) {
+  patchRj45SceneState({ selectedWire: wireId });
+}
+
+export function notifyWirePlace(pinIndex, wireId) {
+  const next = [...state.wiredPins];
+  const previousIndex = next.indexOf(wireId);
+  if (previousIndex >= 0 && previousIndex !== pinIndex) {
+    next[previousIndex] = null;
+  }
+  next[pinIndex] = wireId;
+  const allFilled = next.every((w) => w != null);
+  patchRj45SceneState({
+    wiredPins: next,
+    selectedWire: null,
+    wireError: null,
+    wireSuccess: allFilled,
+  });
+}
+
+export function notifyWireError(message) {
+  patchRj45SceneState({ wireError: message, selectedWire: null });
+}
+
+export function notifyDismissWireError() {
+  patchRj45SceneState({ wireError: null });
+}
+
+export function notifyResetWires() {
+  patchRj45SceneState({
+    wiredPins: [null, null, null, null, null, null, null, null],
+    selectedWire: null,
+    wireError: null,
+    wireSuccess: false,
   });
 }

@@ -48,7 +48,7 @@ export function InstallGuidePanel({ guide, onClose }) {
           </ScrollView>
 
           <Pressable style={styles.primaryBtn} onPress={onClose}>
-            <Text style={styles.primaryBtnText}>Back to board</Text>
+            <Text style={styles.primaryBtnText}>Back</Text>
           </Pressable>
         </View>
       </View>

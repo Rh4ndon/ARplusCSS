@@ -34,13 +34,13 @@ export function NetworkCablingSetupScreen({ navigation }) {
       >
         <Text style={styles.heading}>Network Cabling</Text>
         <Text style={styles.lead}>
-          Choose the cable type you want to practice in AR. Point your camera at the
-          RJ45 marker, then tap each step on the connector.
+          Choose the cable type you want to practice in AR. Point your camera at a
+          flat surface, then arrange the wires into the RJ45 connector.
         </Text>
 
         <Pressable
           style={({ pressed }) => [styles.choiceCard, pressed && styles.choicePressed]}
-          onPress={() => navigation.navigate('MarkerCapture', { type: 'rj45', returnTo: 'ARNetwork', returnParams: { wiringType: 'straight' } })}
+          onPress={() => navigation.navigate('ARNetwork', { wiringType: 'straight' })}
         >
           <View style={styles.choiceInner}>
             <Text style={styles.choiceTitle}>Straight-Through</Text>
@@ -51,7 +51,7 @@ export function NetworkCablingSetupScreen({ navigation }) {
 
         <Pressable
           style={({ pressed }) => [styles.choiceCard, pressed && styles.choicePressed]}
-          onPress={() => navigation.navigate('MarkerCapture', { type: 'rj45', returnTo: 'ARNetwork', returnParams: { wiringType: 'crossover' } })}
+          onPress={() => navigation.navigate('ARNetwork', { wiringType: 'crossover' })}
         >
           <View style={styles.choiceInner}>
             <Text style={styles.choiceTitle}>Crossover</Text>
@@ -61,9 +61,10 @@ export function NetworkCablingSetupScreen({ navigation }) {
         </Pressable>
 
         <View style={styles.tipBox}>
-          <Text style={styles.tipTitle}>📷 Capture tip</Text>
+          <Text style={styles.tipTitle}>📐 AR tip</Text>
           <Text style={styles.tipBody}>
-            Point your camera at an RJ45 port and we will use it as the AR marker.
+            No marker needed: point your camera at a flat, well-lit surface and
+            tap to place the RJ45 workspace.
           </Text>
         </View>
       </ScrollView>
