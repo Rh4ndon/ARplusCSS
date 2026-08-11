@@ -1,68 +1,81 @@
 # ARplusCSS
 
-Educational Android AR app built with **React Native (Expo)** and **ViroReact** (`@reactvision/react-viro`), written in **JavaScript (.js / .jsx)**. Point your camera at a printed motherboard marker; the board appears in AR with tappable hotspots for **CPU**, **RAM**, **24-pin ATX**, **8-pin EPS**, and **GPU (PCIe)** slots. Each hotspot plays an install animation and opens a step-by-step guide.
+Educational Android AR app built with **React Native (Expo)** and **ViroReact** (`@reactvision/react-viro`), written in **JavaScript (.js / .jsx)**. Instead of printed markers, the app uses **image tracking of a device you already own**: point the camera at your **motherboard** or an **RJ45 port**, capture it, and that image becomes the AR tracking target.
+
+## Lessons
+
+- **Hardware — Motherboard assembly:** capture your motherboard, then place **CPU**, **RAM**, **24-pin ATX**, **8-pin EPS**, and **GPU (PCIe)** on hotspots overlaid on your real board. Each hotspot has an install guide.
+- **Network — RJ45 crimping:** capture an RJ45 port, choose **straight-through** or **crossover**, then practice **strip → untwist → wire order → trim → insert → crimp** on both ends. Includes a T568A/T568B wire-color challenge.
 
 ## Features
 
-- Image tracking (ARCore) using a dedicated motherboard marker image
-- Motherboard overlay “pop-in” when the marker is detected
-- Clickable AR hotspots with pulse animation when selected
-- Per-component install animation in 3D space
-- Educational install steps and safety tips
+- Capture-based image tracking (ARCore) for both lessons — no printed markers
+- Per-capture tracking targets (each capture gets a unique target name so re-capturing a new marker always loads the new image)
+- Marker reset when returning to the Network Cabling screen
+- Tappable AR hotspots with install guides and safety tips
+- 3D insertion / wire-layout animations
+- User manual (PDF) + web landing page for APK distribution
 
 ## Requirements
 
-- Node.js **20.19+** and npm (required for Expo SDK 54)
+- Node.js **20.19+** and npm (Expo SDK 54)
 - Android device with **Google Play Services for AR (ARCore)**
 - USB debugging enabled for `expo run:android`
 
-> AR does **not** work in Expo Go. You must use a **development build** (`expo run:android`).
+> AR does **not** work in Expo Go. You must use a **development build** or the release APK.
 
-## Quick start
+## Quick start (dev)
 
 ```bash
 cd /home/rhandon/Projects/ARplusCSS
 rm -rf node_modules package-lock.json
 npm install
-python3 scripts/generate_assets.py   # creates marker + icons if missing
 npx expo prebuild --platform android
 npx expo run:android
-OR
-npx expo run:android --device
 ```
 
-## Using the AR lesson
+## Build the release APK
 
-1. Open the app and tap **Start AR lesson**.
-2. Print `assets/images/motherboard-marker.jpg` at about **A5 width (21 cm)**.
-3. Point the camera at the marker in good lighting.
-4. When tracking locks, tap colored hotspots: **CPU**, **RAM**, **24-Pin**, **8-Pin EPS**, **GPU**.
-5. Watch the install animation and read the guide sheet. Use **Replay AR animation** to see it again.
+```bash
+cd android
+./gradlew assembleRelease -x lint -q
+adb install -r app/build/outputs/apk/release/app-release.apk
+```
 
-## Tuning hotspot alignment
+The release APK lives at `android/app/build/outputs/apk/release/app-release.apk`.
 
-Hotspot positions are defined in `src/ar/hotspots.ts` in meters relative to the marker center. After printing your marker:
+## Using the app
 
-1. Update `MOTHERBOARD_MARKER_PHYSICAL_WIDTH_M` in `src/ar/trackingTargets.ts` to your print width in meters.
-2. Adjust `position` and `size` in `src/ar/hotspots.ts` so taps line up with the photo.
+1. **Hardware lesson:** Home → Hardware → capture your motherboard (fill the frame) → track it, then tap hotspots: **CPU**, **RAM**, **24-Pin**, **8-Pin EPS**, **GPU**.
+2. **Network lesson:** Home → Network Cabling → choose **Straight-Through** or **Crossover** → capture an RJ45 port (centered in the small frame) → track it, then follow the six cabling steps.
 
-Validate marker quality with Google’s [Augmented Images evaluator](https://developers.google.com/ar/develop/augmented-images/arcoreimg).
+Capture tips are shown in-app: keep the marker well lit, centered, and stable for reliable tracking.
 
 ## Project structure
 
 ```
 src/
-  ar/                 # Viro AR scene, tracking, animations
-  components/       # HUD and install guide panel
-  data/             # Educational copy per slot
+  ar/                    # Viro AR scenes, tracking, animations
+    rj45/                # RJ45 lesson (scene, bridge, insertion/wire animations)
+    ARMotherboardScene.jsx
+    MotherboardARSceneInner.jsx
+    trackingTargets.js   # per-name image target registration
+  components/            # ARHud, InstallGuidePanel, etc.
+  data/                  # Educational copy (cabling + component guides)
   navigation/
-  screens/
-assets/images/      # motherboard-marker.jpg (AR target)
+  screens/               # Home, Option, MarkerCapture, AR, Network setup, etc.
+  utils/
+    markerStorage.js     # saves captured marker images + config
+references/              # BUILD-TIME reference photos for marker verification (see references/README.md)
+web/                     # static landing page + user manual (APK download)
+docs/                    # user manual source (PDF)
+assets/images/           # bundled fallback marker images
+scripts/                 # asset + user-manual generation
 ```
 
-## Replacing the marker
+## Marker verification (planned)
 
-For a real classroom setup, use a high-resolution photo of your **actual** teaching motherboard (flat, even lighting, rich detail). Replace `assets/images/motherboard-marker.jpg` and remeasure `physicalWidth`.
+Users could capture anything as a tracking marker. To enforce content, a **visual similarity check** (perceptual hash + quality gate) will run at capture confirm time, comparing the shot against the reference photos in `references/`. See `references/README.md` for the collection plan and `PROJECT_STATUS.md` for status.
 
 ## License
 
