@@ -12,8 +12,24 @@ export const WIRES = [
 const T568B = ['wo', 'o', 'wg', 'b', 'wb', 'g', 'wbr', 'br'];
 const T568A = ['wg', 'g', 'wo', 'b', 'wb', 'o', 'wbr', 'br'];
 
-export function getTargetOrder(wiringType) {
-  return wiringType === 'crossover' ? T568A : T568B;
+export const CONNECTOR_ENDS = {
+  straight: [
+    { id: 'end-a', label: 'End A', standard: 'T568B', order: T568B },
+    { id: 'end-b', label: 'End B', standard: 'T568B', order: T568B },
+  ],
+  crossover: [
+    { id: 'end-a', label: 'End A', standard: 'T568B', order: T568B },
+    { id: 'end-b', label: 'End B', standard: 'T568A', order: T568A },
+  ],
+};
+
+export function getConnectorEnd(wiringType, endIndex = 0) {
+  const ends = CONNECTOR_ENDS[wiringType] ?? CONNECTOR_ENDS.straight;
+  return ends[endIndex] ?? ends[0];
+}
+
+export function getTargetOrder(wiringType, endIndex = 0) {
+  return getConnectorEnd(wiringType, endIndex).order;
 }
 
 export function wireById(id) {
@@ -38,10 +54,24 @@ export const TRAY_POSITIONS = Array.from({ length: 8 }, (_, i) => [
 
 export const JACKET_POS = [0, 0.012, -0.045];
 
-export const CONNECTOR_ALIGN = {
-  position: [-0.01, 0.01, 0],
-  rotation: [1, 181, 3],
-  scale: [0.25, 0.25, 0.25],
+// Tune these values while viewing the AR scene on a phone.
+// Position format is [left/right (x), up/down (y), near/far (z)].
+// Both connector ends deliberately share the same scale and rotation.
+export const RJ45_CONNECTOR_SCALE = [0.016, 0.016, 0.016];
+export const RJ45_CONNECTOR_ROTATION = [0, -90, 180];
+
+export const CONNECTOR_END_A_ALIGN = {
+  position: [-0.045, 0.05, 0],
+  scale: RJ45_CONNECTOR_SCALE,
+  rotation: RJ45_CONNECTOR_ROTATION,
+  wireRotation: [0, 0, 0],
+};
+
+export const CONNECTOR_END_B_ALIGN = {
+  position: [0.045, 0.05, 0],
+  scale: RJ45_CONNECTOR_SCALE,
+  rotation: RJ45_CONNECTOR_ROTATION,
+  wireRotation: [0, 0, 0],
 };
 
 export function seatPos(pinIndex) {
@@ -73,7 +103,7 @@ export function trayCtrl(pinIndex) {
 }
 
 /** Expected wire id at a given pin (0-indexed) for a wiring type. */
-export function expectedWireAt(pinIndex, wiringType) {
-  const order = getTargetOrder(wiringType);
+export function expectedWireAt(pinIndex, wiringType, endIndex = 0) {
+  const order = getTargetOrder(wiringType, endIndex);
   return order[pinIndex] ?? null;
 }

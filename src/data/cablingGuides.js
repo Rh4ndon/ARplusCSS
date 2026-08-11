@@ -68,7 +68,7 @@ const orderStraight = {
   id: 'order',
   shortLabel: 'Order',
   label: 'Wire Order (T568B)',
-  summary: 'Both ends use the same T568B order for straight-through cables (PC to switch).',
+  summary: 'Crimp two RJ45 plugs. Both End A and End B use the same T568B order for straight-through cables (PC to switch).',
   steps: [
     { title: 'Left to right', detail: 'Pin 1→8: White-Orange, Orange, White-Green, Blue, White-Blue, Green, White-Brown, Brown.' },
     { title: 'Both ends', detail: 'Use identical order on both ends of the cable.' },
@@ -81,7 +81,7 @@ const orderCrossover = {
   id: 'order',
   shortLabel: 'Order',
   label: 'Wire Order (Crossover)',
-  summary: 'One end T568A and the other T568B—or swap pairs 1↔3 and 2↔6 for gigabit crossover.',
+  summary: 'Crimp two RJ45 plugs: End A is T568B and End B is T568A. The different ends create the crossover.',
   steps: [
     { title: 'End A', detail: 'Wire one end using T568B (same as straight-through diagram).' },
     { title: 'End B', detail: 'Wire the other end using T568A (swap green and orange pairs).' },
@@ -92,7 +92,7 @@ const orderCrossover = {
   ],
 };
 
-export const cablingStepIds = ['strip', 'untwist', 'order', 'trim', 'insert', 'crimp'];
+export const cablingStepIds = ['strip', 'untwist', 'trim', 'order', 'insert', 'crimp'];
 
 export function getCablingGuide(wiringType, stepId) {
   const orderBlock = wiringType === WIRING_CROSSOVER ? orderCrossover : orderStraight;

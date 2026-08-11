@@ -35,7 +35,8 @@ export function NetworkCablingSetupScreen({ navigation }) {
         <Text style={styles.heading}>Network Cabling</Text>
         <Text style={styles.lead}>
           Choose the cable type you want to practice in AR. Point your camera at a
-          flat surface, then arrange the wires into the RJ45 connector.
+          flat surface, then crimp both RJ45 ends: complete End A before moving to
+          End B.
         </Text>
 
         <Pressable
@@ -63,8 +64,8 @@ export function NetworkCablingSetupScreen({ navigation }) {
         <View style={styles.tipBox}>
           <Text style={styles.tipTitle}>📐 AR tip</Text>
           <Text style={styles.tipBody}>
-            No marker needed: point your camera at a flat, well-lit surface and
-            tap to place the RJ45 workspace.
+            No marker needed: point your camera at a flat, well-lit surface. Keep
+            the plug latch down and contacts up while reading pins 1–8 left to right.
           </Text>
         </View>
       </ScrollView>
