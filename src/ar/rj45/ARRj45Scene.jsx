@@ -12,10 +12,7 @@ import {
   notifyRj45InsertionAnimation,
 } from './rj45SceneBridge';
 import { Rj45WireArrangementPanel } from './Rj45WireArrangementPanel';
-
-const stableRj45Scene = {
-  scene: Rj45ARSceneInner,
-};
+import { registerRj45TrackingTarget, RJ45_TARGET_NAME } from '../trackingTargets';
 
 const lessonButtonLabels = {
   strip: '1. Strip',
@@ -26,12 +23,26 @@ const lessonButtonLabels = {
   crimp: '6. Crimp',
 };
 
-export function ARRj45Scene({ wiringType, onExit }) {
+export function ARRj45Scene({ wiringType, onExit, markerUri, markerPhysicalWidth, markerTargetName }) {
   const [markerVisible, setMarkerVisible] = useState(false);
   const [activeStep, setActiveStep] = useState(null);
   const [showOrderGuide, setShowOrderGuide] = useState(false);
   const [arrangementComplete, setArrangementComplete] = useState(false);
   const [notice, setNotice] = useState(null);
+
+  const targetName = markerTargetName ?? RJ45_TARGET_NAME;
+  const rj45Scene = React.useMemo(
+    () => ({ scene: Rj45ARSceneInner, passProps: { targetName } }),
+    [targetName],
+  );
+
+  useEffect(() => {
+    registerRj45TrackingTarget({
+      targetName,
+      sourceUri: markerUri,
+      physicalWidth: markerPhysicalWidth,
+    });
+  }, [targetName, markerUri, markerPhysicalWidth]);
 
   useEffect(() => {
     resetRj45SceneState();
@@ -104,13 +115,13 @@ export function ARRj45Scene({ wiringType, onExit }) {
 
   return (
     <View style={styles.fill}>
-      <ViroARSceneNavigator autofocus initialScene={stableRj45Scene} style={styles.fill} />
+      <ViroARSceneNavigator autofocus initialScene={rj45Scene} style={styles.fill} />
       <ARHud
         markerDetected={markerVisible}
         slotLabel={activeStep ? `${wiringLabel} · ${guide?.shortLabel}` : wiringLabel}
         activeSlotLabel={activeStep ? guide?.shortLabel : wiringLabel}
-        scanningHint="Point camera at a flat surface"
-        detectedHint="Surface ready — choose a guide below"
+        scanningHint="Point camera at RJ45 marker"
+        detectedHint="RJ45 detected — choose a guide below"
         onReset={resetScene}
         onExit={onExit}
       >

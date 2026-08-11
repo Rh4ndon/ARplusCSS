@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  ViroARPlane,
+  ViroARImageMarker,
   ViroARScene,
   ViroAmbientLight,
   ViroDirectionalLight,
@@ -12,7 +12,13 @@ import {
   CONNECTOR_END_B_ALIGN,
 } from './wireLayout';
 import { Rj45InsertionAnimation } from './Rj45InsertionAnimation';
-import { getRj45SceneState, notifyRj45MarkerFound, subscribeRj45SceneState } from './rj45SceneBridge';
+import {
+  getRj45SceneState,
+  notifyRj45MarkerFound,
+  notifyRj45MarkerLost,
+  subscribeRj45SceneState,
+} from './rj45SceneBridge';
+import { RJ45_TARGET_NAME } from '../trackingTargets';
 
 const rj45ModelSource = require('../../../assets/models/rj45/rj45.glb');
 
@@ -20,14 +26,17 @@ const rj45ModelSource = require('../../../assets/models/rj45/rj45.glb');
  * The AR workspace deliberately renders only the two physical RJ45 ends.
  * End B is mounted only after End A finishes loading so the same GLB is
  * never decoded twice concurrently (native Viro renderer race on Android).
+ *
+ * The scene anchors on a captured RJ45 image target instead of a plane so
+ * the 3D render only appears once the user's RJ45 marker is tracked.
  */
-export function Rj45ARSceneInner() {
+export function Rj45ARSceneInner({ targetName }) {
   const [bridge, setBridge] = React.useState(getRj45SceneState);
   const [endALoaded, setEndALoaded] = React.useState(false);
   React.useEffect(() => subscribeRj45SceneState(setBridge), []);
 
   return (
-    <ViroARScene anchorDetectionTypes={['PlanesHorizontal']}>
+    <ViroARScene>
       <ViroAmbientLight color="#ffffff" intensity={350} />
       <ViroDirectionalLight
         color="#ffffff"
@@ -39,12 +48,11 @@ export function Rj45ARSceneInner() {
         direction={[0, 0, 1]}
         intensity={200}
       />
-      <ViroARPlane
-        minWidth={0.2}
-        minHeight={0.15}
-        alignment="HorizontalUpward"
+      <ViroARImageMarker
+        target={targetName ?? RJ45_TARGET_NAME}
         onAnchorFound={notifyRj45MarkerFound}
         onAnchorUpdated={notifyRj45MarkerFound}
+        onAnchorRemoved={notifyRj45MarkerLost}
       >
         <ViroNode>
           <Viro3DObject
@@ -76,7 +84,7 @@ export function Rj45ARSceneInner() {
             <Rj45InsertionAnimation key={bridge.insertionAnimationRun} wiringType={bridge.wiringType} />
           )}
         </ViroNode>
-      </ViroARPlane>
+      </ViroARImageMarker>
     </ViroARScene>
   );
 }

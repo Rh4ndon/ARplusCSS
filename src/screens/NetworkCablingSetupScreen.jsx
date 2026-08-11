@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { cablingOverview } from '../data/cablingGuides';
+import { deleteMarkerImages } from '../utils/markerStorage';
 
 // ── OptionScreen-aligned palette ─────────────────────────────────────────────
 const C = {
@@ -24,6 +25,10 @@ const C = {
 export function NetworkCablingSetupScreen({ navigation }) {
   const insets = useSafeAreaInsets();
 
+  useEffect(() => {
+    deleteMarkerImages('rj45');
+  }, []);
+
   return (
     <View style={styles.fill}>
       <ScrollView
@@ -34,38 +39,51 @@ export function NetworkCablingSetupScreen({ navigation }) {
       >
         <Text style={styles.heading}>Network Cabling</Text>
         <Text style={styles.lead}>
-          Choose the cable type you want to practice in AR. Point your camera at a
-          flat surface, then crimp both RJ45 ends: complete End A before moving to
-          End B.
+          Choose the cable type you want to practice in AR. Capture an RJ45 port
+          as the tracking marker, then crimp both RJ45 ends: complete End A before
+          moving to End B.
         </Text>
 
         <Pressable
           style={({ pressed }) => [styles.choiceCard, pressed && styles.choicePressed]}
-          onPress={() => navigation.navigate('ARNetwork', { wiringType: 'straight' })}
+          onPress={() =>
+            navigation.navigate('MarkerCapture', {
+              type: 'rj45',
+              returnTo: 'ARNetwork',
+              returnParams: { wiringType: 'straight' },
+            })
+          }
         >
           <View style={styles.choiceInner}>
             <Text style={styles.choiceTitle}>Straight-Through</Text>
             <Text style={styles.choiceBody}>{cablingOverview.straight.body}</Text>
-            <Text style={styles.choiceCta}>Start AR lesson →</Text>
+            <Text style={styles.choiceCta}>Capture RJ45 & start AR lesson →</Text>
           </View>
         </Pressable>
 
         <Pressable
           style={({ pressed }) => [styles.choiceCard, pressed && styles.choicePressed]}
-          onPress={() => navigation.navigate('ARNetwork', { wiringType: 'crossover' })}
+          onPress={() =>
+            navigation.navigate('MarkerCapture', {
+              type: 'rj45',
+              returnTo: 'ARNetwork',
+              returnParams: { wiringType: 'crossover' },
+            })
+          }
         >
           <View style={styles.choiceInner}>
             <Text style={styles.choiceTitle}>Crossover</Text>
             <Text style={styles.choiceBody}>{cablingOverview.crossover.body}</Text>
-            <Text style={styles.choiceCta}>Start AR lesson →</Text>
+            <Text style={styles.choiceCta}>Capture RJ45 & start AR lesson →</Text>
           </View>
         </Pressable>
 
         <View style={styles.tipBox}>
           <Text style={styles.tipTitle}>📐 AR tip</Text>
           <Text style={styles.tipBody}>
-            No marker needed: point your camera at a flat, well-lit surface. Keep
-            the plug latch down and contacts up while reading pins 1–8 left to right.
+            Capture a well-lit RJ45 port centered in the frame — it becomes your AR
+            tracking marker. Keep the plug latch down and contacts up while reading
+            pins 1–8 left to right.
           </Text>
         </View>
       </ScrollView>

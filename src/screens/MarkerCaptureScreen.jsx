@@ -86,7 +86,8 @@ export function MarkerCaptureScreen({ navigation, route }) {
     if (!captured || saving) return;
     try {
       setSaving(true);
-      const savedUri = await saveMarkerImage(captured.uri, markerType);
+      const id = String(Date.now());
+      const savedUri = await saveMarkerImage(captured.uri, markerType, id);
       const widthCm = parseFloat(physicalWidth) || defaultWidth;
       await saveMarkerConfig({
         [`${markerType}PhysicalWidth`]: widthCm,
@@ -96,6 +97,7 @@ export function MarkerCaptureScreen({ navigation, route }) {
         ...returnParams,
         markerUri: savedUri,
         markerPhysicalWidth: widthCm / 100,
+        ...(markerType === 'motherboard' ? {} : { markerTargetName: `${markerType}-${id}` }),
       });
     } catch (e) {
       console.log('[CAPTURE] error saving marker', e);

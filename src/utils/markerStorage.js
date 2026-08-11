@@ -4,8 +4,12 @@ function markersDir() {
   return new Directory(Paths.document, 'markers');
 }
 
-function markerFile(type) {
-  const name = type === 'motherboard' ? 'motherboard.jpg' : 'rj45.jpg';
+function markerFile(type, id) {
+  const name = id
+    ? `${type}-${id}.jpg`
+    : type === 'motherboard'
+      ? 'motherboard.jpg'
+      : 'rj45.jpg';
   return new File(Paths.document, 'markers', name);
 }
 
@@ -13,17 +17,21 @@ function configFile() {
   return new File(Paths.document, 'markers', 'config.json');
 }
 
-export async function saveMarkerImage(uri, type = 'motherboard') {
+export async function saveMarkerImage(uri, type = 'motherboard', id) {
   const dir = markersDir();
   dir.create({ intermediates: true, idempotent: true });
-  const dest = markerFile(type);
-  if (dest.exists) {
-    dest.delete();
+  if (id) {
+    await deleteMarkerImages(type);
+  } else {
+    const dest = markerFile(type);
+    if (dest.exists) {
+      dest.delete();
+    }
   }
   const src = new File(uri);
-  const destUri = dest.uri;
+  const dest = markerFile(type, id);
   src.move(dest);
-  return destUri;
+  return dest.uri;
 }
 
 export async function getMarkerImage(type = 'motherboard') {
@@ -35,6 +43,17 @@ export async function deleteMarkerImage(type = 'motherboard') {
   const file = markerFile(type);
   if (file.exists) {
     file.delete();
+  }
+}
+
+export async function deleteMarkerImages(type = 'motherboard') {
+  const dir = markersDir();
+  if (!dir.exists) return;
+  for (const entry of dir.list()) {
+    const name = entry.name;
+    if (name === `${type}.jpg` || name.startsWith(`${type}-`)) {
+      new File(Paths.document, 'markers', name).delete();
+    }
   }
 }
 
