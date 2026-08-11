@@ -140,6 +140,7 @@ export function ARRj45Scene({ wiringType, onExit }) {
       <ViroARSceneNavigator autofocus initialScene={stableRj45Scene} style={styles.fill} />
       <ARHud
         markerDetected={markerVisible}
+        slotLabel={activeStep ? `${wiringLabel} · ${guide?.shortLabel}` : wiringLabel}
         activeSlotLabel={activeStep ? guide?.shortLabel : wiringLabel}
         scanningHint="Point camera at a flat surface"
         detectedHint="Surface ready — choose a guide below"

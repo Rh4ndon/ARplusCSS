@@ -61,7 +61,7 @@ export function Rj45ARSceneInner() {
             onError={(e) => console.log('[LOAD] RJ45 End B onError', e)}
           />
           {bridge.insertionAnimationRun > 0 && (
-            <Rj45InsertionAnimation key={bridge.insertionAnimationRun} />
+            <Rj45InsertionAnimation key={bridge.insertionAnimationRun} wiringType={bridge.wiringType} />
           )}
         </ViroNode>
       </ViroARPlane>

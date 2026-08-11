@@ -2,15 +2,33 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { getConnectorEnd, getTargetOrder, wireById } from './wireLayout';
 
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 const wireShortLabels = {
   wo: 'White / Orange', o: 'Orange', wg: 'White / Green', b: 'Blue',
   wb: 'White / Blue', g: 'Green', wbr: 'White / Brown', br: 'Brown',
 };
 
-const wireColors = {
-  wo: '#fb923c', o: '#f97316', wg: '#4ade80', b: '#3b82f6',
-  wb: '#60a5fa', g: '#22c55e', wbr: '#a16207', br: '#713f12',
-};
+function WireSwatch({ wireId, style }) {
+  const wire = wireById(wireId);
+  if (!wire || !wire.solid) {
+    const stripeColor = wire?.stripeColor ?? '#f97316';
+    return (
+      <View style={[styles.swatch, style, { overflow: 'hidden' }]}>
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: '#ffffff', opacity: 0.92 }]} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: stripeColor, width: '38%', alignSelf: 'flex-end' }]} />
+      </View>
+    );
+  }
+  return <View style={[styles.swatch, style, { backgroundColor: wire.color }]} />;
+}
 
 function EndOrder({ end, order, placed = [], activePin, compact = false }) {
   return (
@@ -27,7 +45,11 @@ function EndOrder({ end, order, placed = [], activePin, compact = false }) {
           return (
             <View key={`${end.id}-${index}`} style={[styles.pin, isActive && styles.pinActive]}>
               <Text style={styles.pinNumber}>{index + 1}</Text>
-              <View style={[styles.swatch, isPlaced && { backgroundColor: wireColors[wireId] }]} />
+              {isPlaced ? (
+                <WireSwatch wireId={wireId} style={styles.swatchPlaced} />
+              ) : (
+                <View style={[styles.swatch, styles.swatchEmpty]} />
+              )}
               <Text style={styles.pinLabel}>{isPlaced ? wireShortLabels[wireId] : '—'}</Text>
             </View>
           );
@@ -48,6 +70,11 @@ export function Rj45WireArrangementPanel({ wiringType, onComplete, onClose }) {
   const activeOrder = getTargetOrder(wiringType, endIndex);
   const expectedWire = activeOrder[pinIndex];
   const complete = mode === 'complete';
+
+  const shuffledOrder = useMemo(
+    () => shuffle(getTargetOrder(wiringType, endIndex)),
+    [wiringType, endIndex]
+  );
 
   const startPractice = () => {
     setMode('practice');
@@ -117,7 +144,7 @@ export function Rj45WireArrangementPanel({ wiringType, onComplete, onClose }) {
             {message && <Text style={[styles.message, complete && styles.successMessage]}>{message}</Text>}
             {!complete ? (
               <View style={styles.palette}>
-                {getTargetOrder(wiringType, endIndex).map((wireId) => {
+                {shuffledOrder.map((wireId) => {
                   const used = placed[endIndex].includes(wireId);
                   return (
                     <Pressable
@@ -126,7 +153,7 @@ export function Rj45WireArrangementPanel({ wiringType, onComplete, onClose }) {
                       style={[styles.wireButton, used && styles.wireButtonUsed]}
                       onPress={() => chooseWire(wireId)}
                     >
-                      <View style={[styles.paletteSwatch, { backgroundColor: wireColors[wireId] }]} />
+                      <WireSwatch wireId={wireId} style={styles.paletteSwatch} />
                       <Text style={styles.wireButtonText}>{wireById(wireId)?.label}</Text>
                     </Pressable>
                   );
@@ -151,8 +178,10 @@ const styles = StyleSheet.create({
   content: { padding: 14, gap: 10 }, learnNote: { color: '#cbd5e1', fontSize: 13, lineHeight: 18 },
   endCard: { backgroundColor: '#172033', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#334155', gap: 7 }, endCardCompact: { paddingVertical: 8 },
   endHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, endTitle: { color: '#fff', fontSize: 15, fontWeight: '800' }, standard: { color: '#86efac', fontSize: 12, fontWeight: '800' }, orientation: { color: '#94a3b8', fontSize: 10 },
-  pinGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 5 }, pin: { width: '23.8%', minHeight: 54, borderRadius: 7, backgroundColor: '#0f172a', padding: 5, borderWidth: 1, borderColor: '#334155' }, pinActive: { borderColor: '#facc15', backgroundColor: '#3b310c' }, pinNumber: { color: '#94a3b8', fontSize: 9, fontWeight: '800' }, swatch: { height: 7, borderRadius: 4, backgroundColor: '#334155', marginVertical: 4 }, pinLabel: { color: '#e2e8f0', fontSize: 8, fontWeight: '700' },
+  pinGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 5 }, pin: { width: '23.8%', minHeight: 54, borderRadius: 7, backgroundColor: '#0f172a', padding: 5, borderWidth: 1, borderColor: '#334155' }, pinActive: { borderColor: '#facc15', backgroundColor: '#3b310c' }, pinNumber: { color: '#94a3b8', fontSize: 9, fontWeight: '800' },
+  pinLabel: { color: '#ffffff', fontSize: 8, fontWeight: '700' },
+  swatch: { height: 7, borderRadius: 4, backgroundColor: '#334155', marginVertical: 4 }, swatchEmpty: { backgroundColor: '#334155' }, swatchPlaced: { backgroundColor: 'transparent' },
   message: { color: '#fecaca', backgroundColor: '#450a0a', borderRadius: 8, padding: 10, fontSize: 12, fontWeight: '700', textAlign: 'center' }, successMessage: { color: '#bbf7d0', backgroundColor: '#14532d' },
-  palette: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 2 }, wireButton: { width: '48.7%', flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 8, borderWidth: 1, borderColor: '#475569', backgroundColor: '#1e293b', padding: 9 }, wireButtonUsed: { opacity: 0.35 }, paletteSwatch: { width: 13, height: 13, borderRadius: 7 }, wireButtonText: { color: '#fff', fontSize: 11, fontWeight: '700', flexShrink: 1 },
+  palette: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 2 }, wireButton: { width: '48.7%', flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 8, borderWidth: 1, borderColor: '#475569', backgroundColor: '#1e293b', padding: 9 }, wireButtonUsed: { opacity: 0.35 }, paletteSwatch: { width: 13, height: 13, borderRadius: 7, overflow: 'hidden' }, wireButtonText: { color: '#fff', fontSize: 11, fontWeight: '700', flexShrink: 1 },
   primaryButton: { marginTop: 4, borderRadius: 10, backgroundColor: '#2563eb', paddingVertical: 13, alignItems: 'center' }, primaryButtonText: { color: '#fff', fontSize: 14, fontWeight: '800' },
 });

@@ -81,10 +81,10 @@ const orderCrossover = {
   id: 'order',
   shortLabel: 'Order',
   label: 'Wire Order (Crossover)',
-  summary: 'Crimp two RJ45 plugs: End A is T568B and End B is T568A. The different ends create the crossover.',
+  summary: 'Crimp two RJ45 plugs: End A is T568A and End B is T568B. The different ends create the crossover.',
   steps: [
-    { title: 'End A', detail: 'Wire one end using T568B (same as straight-through diagram).' },
-    { title: 'End B', detail: 'Wire the other end using T568A (swap green and orange pairs).' },
+    { title: 'End A', detail: 'Wire one end using T568A (swap green and orange pairs).' },
+    { title: 'End B', detail: 'Wire the other end using T568B (same as straight-through diagram).' },
     { title: 'Pairs swapped', detail: 'Transmit and receive pairs cross: 1–3 and 2–6 exchange between ends.' },
   ],
   safetyTips: [

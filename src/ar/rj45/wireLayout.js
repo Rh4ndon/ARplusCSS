@@ -9,8 +9,8 @@ export const WIRES = [
   { id: 'br', label: 'Brown', solid: true, color: '#92400e' },
 ];
 
-const T568B = ['wo', 'o', 'wg', 'b', 'wb', 'g', 'wbr', 'br'];
-const T568A = ['wg', 'g', 'wo', 'b', 'wb', 'o', 'wbr', 'br'];
+export const T568B = ['wo', 'o', 'wg', 'b', 'wb', 'g', 'wbr', 'br'];
+export const T568A = ['wg', 'g', 'wo', 'b', 'wb', 'o', 'wbr', 'br'];
 
 export const CONNECTOR_ENDS = {
   straight: [
@@ -18,8 +18,8 @@ export const CONNECTOR_ENDS = {
     { id: 'end-b', label: 'End B', standard: 'T568B', order: T568B },
   ],
   crossover: [
-    { id: 'end-a', label: 'End A', standard: 'T568B', order: T568B },
-    { id: 'end-b', label: 'End B', standard: 'T568A', order: T568A },
+    { id: 'end-a', label: 'End A', standard: 'T568A', order: T568A },
+    { id: 'end-b', label: 'End B', standard: 'T568B', order: T568B },
   ],
 };
 
@@ -73,6 +73,16 @@ export const CONNECTOR_END_B_ALIGN = {
   rotation: RJ45_CONNECTOR_ROTATION,
   wireRotation: [0, 0, 0],
 };
+
+// ---- Wire tuning (edit these freely) ----
+// All values are relative to the connector's local frame, so they already
+// inherit the 3D RJ45's scale/rotation. Tweak them until the wires line up
+// perfectly with the model's pins.
+export const WIRE_INSERT_BASE = [-0.0075, 0.02, -0.045]; // [x, y, z] of the leftmost pin
+export const WIRE_INSERT_SPACING = 0.0025; // gap between adjacent pins
+export const WIRE_INSERT_ROTATION = [0, -90, 0]; // [x, y, z] in degrees
+export const WIRE_INSERT_SCALE = [0.0015, 0.0015, 0.035]; // [x, y, z] box size
+export const WIRE_INSERT_SLIDE_Z = 0.018; // travel distance when sliding into the plug
 
 export function seatPos(pinIndex) {
   return PIN_POSITIONS[pinIndex];

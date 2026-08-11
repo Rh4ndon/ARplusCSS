@@ -13,6 +13,7 @@ export function ARHud({
   onExit,
   scanningHint = 'Point camera at motherboard marker',
   detectedHint = 'Motherboard detected',
+  slotLabel,
 }) {
   const insets = useSafeAreaInsets();
 
@@ -54,6 +55,11 @@ export function ARHud({
           )}
         </View>
       </View>
+      {slotLabel && (
+        <View style={styles.slotBanner}>
+          <Text style={styles.slotText}>{slotLabel}</Text>
+        </View>
+      )}
       {showInfo && description && (
         <View style={styles.descBanner}>
           <Text style={styles.descText}>{description}</Text>
@@ -125,6 +131,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  slotBanner: {
+    marginTop: 8,
+    backgroundColor: 'rgba(37, 99, 235, 0.25)',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignSelf: 'flex-start',
+  },
+  slotText: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: '800',
   },
   descText: {
     color: '#cbd5e1',
