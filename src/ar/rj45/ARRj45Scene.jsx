@@ -26,39 +26,6 @@ const lessonButtonLabels = {
   crimp: '6. Crimp',
 };
 
-function CablingStepButtons({ arrangementComplete, notice, onSelect, onBlocked }) {
-  return (
-    <View style={styles.lessonControls}>
-      <Text style={styles.lessonControlsTitle}>Choose a cabling guide</Text>
-      <View style={styles.lessonButtonGrid}>
-        {cablingStepIds.map((stepId) => (
-          <Pressable
-            key={stepId}
-            style={({ pressed }) => [
-              styles.lessonButton,
-              (stepId === 'insert' || stepId === 'crimp') && !arrangementComplete && styles.lessonButtonLocked,
-              pressed && styles.lessonButtonPressed,
-            ]}
-            onPress={() => {
-              if ((stepId === 'insert' || stepId === 'crimp') && !arrangementComplete) {
-                onBlocked();
-                return;
-              }
-              onSelect(stepId);
-            }}
-          >
-            <Text style={styles.lessonButtonText}>{lessonButtonLabels[stepId]}</Text>
-            {(stepId === 'insert' || stepId === 'crimp') && !arrangementComplete && (
-              <Text style={styles.lockText}>Finish colors first</Text>
-            )}
-          </Pressable>
-        ))}
-      </View>
-      {notice && <Text style={styles.lessonNotice}>{notice}</Text>}
-    </View>
-  );
-}
-
 export function ARRj45Scene({ wiringType, onExit }) {
   const [markerVisible, setMarkerVisible] = useState(false);
   const [activeStep, setActiveStep] = useState(null);
@@ -146,18 +113,38 @@ export function ARRj45Scene({ wiringType, onExit }) {
         detectedHint="Surface ready — choose a guide below"
         onReset={resetScene}
         onExit={onExit}
-      />
-      {markerVisible && !activeStep && (
-        <CablingStepButtons
-          arrangementComplete={arrangementComplete}
-          notice={notice}
-          onSelect={handleSelectStep}
-          onBlocked={() => setNotice('Finish the Wire colors challenge perfectly before inserting or crimping.')}
-        />
-      )}
+      >
+        <View style={[styles.lessonControls, markerVisible && !activeStep ? styles.lessonControlsOn : styles.lessonControlsOff]}>
+          <Text style={styles.lessonControlsTitle}>Choose a cabling guide</Text>
+            <View style={styles.lessonButtonGrid}>
+              {cablingStepIds.map((stepId) => (
+                <Pressable
+                  key={stepId}
+                  style={({ pressed }) => [
+                    styles.lessonButton,
+                    (stepId === 'insert' || stepId === 'crimp') && !arrangementComplete && styles.lessonButtonLocked,
+                    pressed && styles.lessonButtonPressed,
+                  ]}
+                  onPress={() => {
+                    if ((stepId === 'insert' || stepId === 'crimp') && !arrangementComplete) {
+                      setNotice('Finish the Wire colors challenge perfectly before inserting or crimping.');
+                      return;
+                    }
+                    handleSelectStep(stepId);
+                  }}
+                >
+                  <Text style={styles.lessonButtonText}>{lessonButtonLabels[stepId]}</Text>
+                  {(stepId === 'insert' || stepId === 'crimp') && !arrangementComplete && (
+                    <Text style={styles.lockText}>Finish colors first</Text>
+                  )}
+                </Pressable>
+              ))}
+            </View>
+            {notice && <Text style={styles.lessonNotice}>{notice}</Text>}
+      </View>
+    </ARHud>
       {guide && (!isOrderActive || showOrderGuide) && (
-        <InstallGuidePanel
-          guide={guide}
+        <InstallGuidePanel          guide={guide}
           onClose={closeGuide}
           primaryActionLabel={activeStep === 'order' ? 'Start wire practice' : 'Back'}
           onPrimaryAction={activeStep === 'order' ? startOrderPractice : undefined}
@@ -180,13 +167,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     right: 16,
-    bottom: 30,
     padding: 12,
     borderRadius: 14,
     backgroundColor: 'rgba(10,14,23,0.92)',
     borderWidth: 1,
     borderColor: 'rgba(59,130,246,0.35)',
   },
+  lessonControlsOn: { bottom: 30 },
+  lessonControlsOff: { bottom: -1000 },
   lessonControlsTitle: {
     color: '#e2e8f0',
     fontSize: 12,

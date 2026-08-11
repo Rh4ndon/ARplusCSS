@@ -36,11 +36,14 @@ function AlignRow({ children }) {
  * Manual motherboard align controls (ported from Unity AlignPanel).
  * Shown after marker detect, before Start.
  */
-export function MotherboardAlignPanel({ onLock }) {
+export function MotherboardAlignPanel({ onLock, hidden = false }) {
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.panel, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+    <View
+      style={[styles.panel, hidden && styles.panelHidden, { paddingBottom: Math.max(insets.bottom, 12) }]}
+      pointerEvents={hidden ? 'none' : 'auto'}
+    >
       <Text style={styles.title}>Align motherboard</Text>
       <Text style={styles.hint}>
         Nudge until the 3D board sits on your physical board, then lock.
@@ -122,6 +125,9 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     zIndex: 85,
     elevation: 12,
+  },
+  panelHidden: {
+    bottom: -3000,
   },
   title: {
     color: '#f1f5f9',

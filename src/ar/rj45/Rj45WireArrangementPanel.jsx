@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { getConnectorEnd, getTargetOrder, wireById } from './wireLayout';
 
 function shuffle(arr) {
@@ -107,7 +107,9 @@ export function Rj45WireArrangementPanel({ wiringType, onComplete, onClose }) {
   };
 
   return (
-    <View style={styles.overlay}>
+    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
+      <View style={styles.modalRoot}>
+        <View style={styles.overlay}>
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>RJ45 wire arrangement</Text>
@@ -167,12 +169,15 @@ export function Rj45WireArrangementPanel({ wiringType, onComplete, onClose }) {
           </>
         )}
       </ScrollView>
-    </View>
+        </View>
+      </View>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: { position: 'absolute', top: 72, bottom: 12, left: 10, right: 10, backgroundColor: 'rgba(15,23,42,0.97)', borderRadius: 16, borderWidth: 1, borderColor: '#334155' },
+  modalRoot: { flex: 1 },
+  overlay: { position: 'absolute', top: 72, bottom: 12, left: 10, right: 10, backgroundColor: 'rgba(15,23,42,0.97)', borderRadius: 16, borderWidth: 1, borderColor: '#334155', zIndex: 90, elevation: 15 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', padding: 16, borderBottomWidth: 1, borderBottomColor: '#334155' },
   title: { color: '#fff', fontSize: 18, fontWeight: '800' }, subtitle: { color: '#94a3b8', fontSize: 12, marginTop: 4 }, close: { color: '#93c5fd', fontWeight: '800', fontSize: 13 },
   content: { padding: 14, gap: 10 }, learnNote: { color: '#cbd5e1', fontSize: 13, lineHeight: 18 },

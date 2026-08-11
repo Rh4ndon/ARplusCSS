@@ -14,6 +14,7 @@ export function ARHud({
   scanningHint = 'Point camera at motherboard marker',
   detectedHint = 'Motherboard detected',
   slotLabel,
+  children,
 }) {
   const insets = useSafeAreaInsets();
 
@@ -65,6 +66,7 @@ export function ARHud({
           <Text style={styles.descText}>{description}</Text>
         </View>
       )}
+      {children}
     </View>
   );
 }
@@ -73,6 +75,8 @@ const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
     paddingHorizontal: 16,
+    zIndex: 90,
+    elevation: 15,
   },
   topRow: {
     flexDirection: 'row',

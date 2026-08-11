@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { ViroARSceneNavigator } from '@reactvision/react-viro';
 import { MotherboardARSceneInner } from './MotherboardARSceneInner';
 import { registerMotherboardTrackingTarget } from './trackingTargets';
@@ -49,8 +49,6 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
   const [phase, setPhase] = useState('align');
   const lastComponentId = useRef(null);
   const prevInstalledCount = useRef(0);
-  const errorOpacity = useRef(new Animated.Value(0)).current;
-  const successOpacity = useRef(new Animated.Value(0)).current;
 
   const prevLoading = useRef(false);
 
@@ -99,45 +97,15 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
 
   useEffect(() => {
     if (!installError) return;
-    errorOpacity.setValue(0);
-    Animated.sequence([
-      Animated.timing(errorOpacity, {
-        toValue: 1,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-      Animated.delay(2500),
-      Animated.timing(errorOpacity, {
-        toValue: 0,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      notifyDismissError();
-      setInstallError(null);
-    });
-  }, [installError, errorOpacity]);
+    const t = setTimeout(() => notifyDismissError(), 3200);
+    return () => clearTimeout(t);
+  }, [installError]);
 
   useEffect(() => {
     if (!installSuccess) return;
-    successOpacity.setValue(0);
-    Animated.sequence([
-      Animated.timing(successOpacity, {
-        toValue: 1,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-      Animated.delay(2800),
-      Animated.timing(successOpacity, {
-        toValue: 0,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      notifyDismissSuccess();
-      setInstallSuccess(null);
-    });
-  }, [installSuccess, successOpacity]);
+    const t = setTimeout(() => notifyDismissSuccess(), 3200);
+    return () => clearTimeout(t);
+  }, [installSuccess]);
 
   useEffect(() => {
     if (installedSlots.length > prevInstalledCount.current && phase === 'placing') {
@@ -290,20 +258,11 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
           onReset={handleReset}
           onToggleInfo={handleToggleInfo}
           onExit={onExit}
-        />
-      {showAlign && <MotherboardAlignPanel onLock={handleLockBoard} />}
-      {showStart && (
-        <Pressable style={styles.actionBtn} onPress={handleProceed}>
-          <Text style={styles.actionBtnText}>Start</Text>
-        </Pressable>
-      )}
-      {showNext && (
-        <Pressable style={styles.actionBtn} onPress={handleProceed}>
-          <Text style={styles.actionBtnText}>Next</Text>
-        </Pressable>
-      )}
-      {showPlacementControls && (
-        <View style={styles.placementControls}>
+        >
+        <View
+          style={[styles.placementControls, showPlacementControls ? styles.placementOn : styles.placementOff]}
+          pointerEvents={showPlacementControls ? 'auto' : 'none'}
+        >
           <Text style={styles.placementHint}>Move the component over the blue slot</Text>
           <View style={styles.dpad}>
             <Pressable
@@ -346,8 +305,16 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
             </Pressable>
           </View>
         </View>
-      )}
-      {showDone && (
+        </ARHud>
+      <MotherboardAlignPanel onLock={handleLockBoard} hidden={!showAlign} />
+      <Pressable
+        style={[styles.actionBtn, showStart || showNext ? styles.actionBtnOn : styles.actionBtnOff]}
+        onPress={handleProceed}
+        pointerEvents={showStart || showNext ? 'auto' : 'none'}
+      >
+        <Text style={styles.actionBtnText}>{showNext ? 'Next' : 'Start'}</Text>
+      </Pressable>
+      <Modal visible={showDone} transparent>
         <View style={styles.congratsOverlay}>
           <View style={styles.congratsCard}>
             <Text style={styles.congratsTitle}>Congratulations!</Text>
@@ -357,27 +324,29 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
             </Pressable>
           </View>
         </View>
-      )}
-      {installError && (
-        <Animated.View style={[styles.errorToast, { opacity: errorOpacity }]}>
-          <Text style={styles.errorText}>{installError}</Text>
-        </Animated.View>
-      )}
-      {installSuccess && (
-        <Animated.View style={[styles.successToast, { opacity: successOpacity }]}>
-          <Text style={styles.successText}>
-            {installSuccess} installed successfully
-          </Text>
-        </Animated.View>
-      )}
-      {modelsLoading && (
+      </Modal>
+      <View
+        style={[styles.errorToast, installError ? styles.toastOn : styles.toastOff]}
+        pointerEvents="none"
+      >
+        <Text style={styles.errorText}>{installError}</Text>
+      </View>
+      <View
+        style={[styles.successToast, installSuccess ? styles.toastOn : styles.toastOff]}
+        pointerEvents="none"
+      >
+        <Text style={styles.successText}>
+          {installSuccess} installed successfully
+        </Text>
+      </View>
+      <Modal visible={modelsLoading} transparent>
         <View style={styles.loadingOverlay} pointerEvents="none">
           <View style={styles.loadingCard}>
             <ActivityIndicator size="large" color={colors.primary} />
             <Text style={styles.loadingText}>Loading 3D model…</Text>
           </View>
         </View>
-      )}
+      </Modal>
       {guide && (
         <InstallGuidePanel
           guide={guide}
@@ -393,7 +362,6 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   actionBtn: {
     position: 'absolute',
-    bottom: 100,
     alignSelf: 'center',
     backgroundColor: colors.primary,
     paddingHorizontal: 48,
@@ -402,6 +370,8 @@ const styles = StyleSheet.create({
     elevation: 8,
     zIndex: 80,
   },
+  actionBtnOn: { bottom: 100 },
+  actionBtnOff: { bottom: -300 },
   actionBtnText: {
     color: '#ffffff',
     fontSize: 18,
@@ -409,8 +379,8 @@ const styles = StyleSheet.create({
   },
   placementControls: {
     position: 'absolute',
-    bottom: 30,
-    alignSelf: 'center',
+    left: 16,
+    right: 16,
     alignItems: 'center',
     backgroundColor: 'rgba(10,14,23,0.92)',
     borderRadius: 16,
@@ -418,9 +388,9 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     padding: 12,
     gap: 8,
-    zIndex: 80,
-    elevation: 8,
   },
+  placementOn: { bottom: 150 },
+  placementOff: { bottom: -2000 },
   placementHint: {
     color: colors.text,
     fontSize: 13,
@@ -520,7 +490,6 @@ const styles = StyleSheet.create({
   },
   errorToast: {
     position: 'absolute',
-    top: 100,
     left: 24,
     right: 24,
     backgroundColor: '#ef4444',
@@ -531,6 +500,8 @@ const styles = StyleSheet.create({
     zIndex: 100,
     elevation: 10,
   },
+  toastOn: { top: 100 },
+  toastOff: { top: -500 },
   errorText: {
     color: '#ffffff',
     fontSize: 15,
@@ -539,7 +510,6 @@ const styles = StyleSheet.create({
   },
   successToast: {
     position: 'absolute',
-    top: 100,
     left: 24,
     right: 24,
     backgroundColor: colors.success,
