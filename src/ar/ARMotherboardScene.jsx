@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { ViroARSceneNavigator } from '@reactvision/react-viro';
+import { useVideoPlayer } from 'expo-video';
 import { MotherboardARSceneInner } from './MotherboardARSceneInner';
 import { registerMotherboardTrackingTarget } from './trackingTargets';
 import { componentGuides } from '../data/componentGuides';
@@ -23,6 +24,9 @@ import {
 } from './arSceneBridge';
 import { colors } from '../theme/colors';
 import { getBoardState, saveBoardState } from '../utils/boardStateStorage';
+
+const installSound = require('../../assets/sounds/install.wav');
+const congratsSound = require('../../assets/sounds/success.mp3');
 
 const stableARScene = {
   scene: MotherboardARSceneInner,
@@ -51,6 +55,8 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
   const prevInstalledCount = useRef(0);
 
   const prevLoading = useRef(false);
+  const installPlayer = useVideoPlayer(installSound, (p) => { p.loop = false; });
+  const congratsPlayer = useVideoPlayer(congratsSound, (p) => { p.loop = false; });
 
   useEffect(() => {
     registerMotherboardTrackingTarget({
@@ -103,6 +109,8 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
 
   useEffect(() => {
     if (!installSuccess) return;
+    installPlayer.currentTime = 0;
+    installPlayer.play();
     const t = setTimeout(() => notifyDismissSuccess(), 3200);
     return () => clearTimeout(t);
   }, [installSuccess]);
@@ -148,6 +156,8 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
     const next = INSTALL_ORDER.find((id) => !installedSlots.includes(id));
     if (!next) {
       setPhase('done');
+      congratsPlayer.currentTime = 0;
+      congratsPlayer.play();
       return;
     }
     handleSelectSlot(next);
@@ -379,15 +389,15 @@ const styles = StyleSheet.create({
   },
   placementControls: {
     position: 'absolute',
-    left: 16,
-    right: 16,
+    alignSelf: 'center',
+    width: 180,
     alignItems: 'center',
-    backgroundColor: 'rgba(10,14,23,0.92)',
-    borderRadius: 16,
+    backgroundColor: 'rgba(10,14,23,0.5)',
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: 12,
-    gap: 8,
+    padding: 8,
+    gap: 4,
   },
   placementOn: { bottom: 150 },
   placementOff: { bottom: -2000 },
@@ -402,12 +412,12 @@ const styles = StyleSheet.create({
   },
   dpadRow: {
     flexDirection: 'row',
-    gap: 54,
+    gap: 40,
   },
   moveBtn: {
-    width: 42,
-    height: 36,
-    borderRadius: 10,
+    width: 34,
+    height: 30,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.surfaceElevated,
@@ -416,9 +426,9 @@ const styles = StyleSheet.create({
   },
   moveBtnText: {
     color: '#ffffff',
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '700',
-    lineHeight: 25,
+    lineHeight: 22,
   },
   placementActions: {
     flexDirection: 'row',
@@ -428,23 +438,25 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceElevated,
     borderColor: colors.border,
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
   },
   resetPlacementText: {
     color: colors.text,
     fontWeight: '700',
+    fontSize: 12,
   },
   placeBtn: {
     backgroundColor: colors.success,
-    borderRadius: 10,
-    paddingHorizontal: 26,
-    paddingVertical: 10,
+    borderRadius: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 7,
   },
   placeBtnText: {
     color: '#042f2e',
     fontWeight: '800',
+    fontSize: 12,
   },
   congratsOverlay: {
     ...StyleSheet.absoluteFillObject,

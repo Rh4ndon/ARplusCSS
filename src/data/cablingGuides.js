@@ -29,14 +29,14 @@ const baseSteps = {
   trim: {
     id: 'trim',
     shortLabel: 'Trim',
-    label: 'Trim & Flatten',
-    summary: 'Cut wires to even length and keep them flat before insertion.',
+    label: 'Strip & Trim Wires',
+    summary: 'Strip insulation from each individual conductor and trim them to even length for insertion.',
     steps: [
-      { title: 'Hold order', detail: 'Keep wire order pressed between thumb and finger.' },
-      { title: 'Cut square', detail: 'Trim all conductors to the same length (about 12–13 mm in the plug).' },
-      { title: 'Check tips', detail: 'Ends should be straight across—re-trim if any wire is longer.' },
+      { title: 'Strip individual wires', detail: 'Use wire strippers to remove a small amount of insulation from each individual conductor.' },
+      { title: 'Align in order', detail: 'Keep all eight wires flat, straight, and in the correct T568B color order.' },
+      { title: 'Trim evenly', detail: 'Cut all conductors to the same length (about 12–13 mm) so they seat properly in the plug.' },
     ],
-    safetyTips: ['Do not let go of wire order while trimming.'],
+    safetyTips: ['Do not strip too much insulation—only expose enough for the plug contacts.', 'Keep wire order intact while trimming.'],
   },
   insert: {
     id: 'insert',

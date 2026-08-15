@@ -10,7 +10,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 
-export function InstallGuidePanel({ guide, onClose, primaryActionLabel = 'Back', onPrimaryAction }) {
+export function InstallGuidePanel({ guide, onClose, primaryActionLabel = 'Back', onPrimaryAction, onBackWithVideo }) {
   const insets = useSafeAreaInsets();
 
   return (
@@ -47,7 +47,7 @@ export function InstallGuidePanel({ guide, onClose, primaryActionLabel = 'Back',
             ))}
           </ScrollView>
 
-          <Pressable style={styles.primaryBtn} onPress={onPrimaryAction ?? onClose}>
+          <Pressable style={styles.primaryBtn} onPress={onBackWithVideo ?? onPrimaryAction ?? onClose}>
             <Text style={styles.primaryBtnText}>{primaryActionLabel}</Text>
           </Pressable>
         </View>

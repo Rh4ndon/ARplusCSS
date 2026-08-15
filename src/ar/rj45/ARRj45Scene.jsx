@@ -5,6 +5,7 @@ import { Rj45ARSceneInner } from './Rj45ARSceneInner';
 import { cablingStepIds, getCablingGuide } from '../../data/cablingGuides';
 import { InstallGuidePanel } from '../../components/InstallGuidePanel';
 import { ARHud } from '../../components/ARHud';
+import { StepVideoPlayer } from '../../components/StepVideoPlayer';
 import {
   patchRj45SceneState,
   registerRj45SceneHandlers,
@@ -13,6 +14,13 @@ import {
 } from './rj45SceneBridge';
 import { Rj45WireArrangementPanel } from './Rj45WireArrangementPanel';
 import { registerRj45TrackingTarget, RJ45_TARGET_NAME } from '../trackingTargets';
+
+const stepVideoMap = {
+  strip: require('../../../assets/videos/strip.mp4'),
+  untwist: require('../../../assets/videos/untwist.mp4'),
+  trim: require('../../../assets/videos/trim.mp4'),
+  crimp: require('../../../assets/videos/crimp.mp4'),
+};
 
 const lessonButtonLabels = {
   strip: '1. Strip',
@@ -29,6 +37,7 @@ export function ARRj45Scene({ wiringType, onExit, markerUri, markerPhysicalWidth
   const [showOrderGuide, setShowOrderGuide] = useState(false);
   const [arrangementComplete, setArrangementComplete] = useState(false);
   const [notice, setNotice] = useState(null);
+  const [videoStep, setVideoStep] = useState(null);
 
   const targetName = markerTargetName ?? RJ45_TARGET_NAME;
   const rj45Scene = React.useMemo(
@@ -89,6 +98,22 @@ export function ARRj45Scene({ wiringType, onExit, markerUri, markerPhysicalWidth
 
   const startOrderPractice = useCallback(() => {
     setShowOrderGuide(false);
+  }, []);
+
+  const handleBackWithVideo = useCallback(() => {
+    if (activeStep && stepVideoMap[activeStep]) {
+      setVideoStep(activeStep);
+      setActiveStep(null);
+      setShowOrderGuide(false);
+    } else {
+      closeGuide();
+    }
+  }, [activeStep, closeGuide]);
+
+  const handleCloseVideo = useCallback(() => {
+    setVideoStep(null);
+    setActiveStep(null);
+    patchRj45SceneState({ activeStep: null, playInstallAnim: false });
   }, []);
 
   const handleArrangementComplete = useCallback(() => {
@@ -159,6 +184,7 @@ export function ARRj45Scene({ wiringType, onExit, markerUri, markerPhysicalWidth
           onClose={closeGuide}
           primaryActionLabel={activeStep === 'order' ? 'Start wire practice' : 'Back'}
           onPrimaryAction={activeStep === 'order' ? startOrderPractice : undefined}
+          onBackWithVideo={activeStep !== 'order' ? handleBackWithVideo : undefined}
         />
       )}
       {isOrderActive && (
@@ -168,6 +194,11 @@ export function ARRj45Scene({ wiringType, onExit, markerUri, markerPhysicalWidth
           onClose={closeGuide}
         />
       )}
+      <StepVideoPlayer
+        visible={videoStep !== null}
+        videoSource={videoStep ? stepVideoMap[videoStep] : null}
+        onExit={handleCloseVideo}
+      />
     </View>
   );
 }

@@ -1,6 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useVideoPlayer } from 'expo-video';
 import { getConnectorEnd, getTargetOrder, wireById } from './wireLayout';
+
+const successSound = require('../../../assets/sounds/success.mp3');
 
 function shuffle(arr) {
   const a = [...arr];
@@ -66,6 +69,10 @@ export function Rj45WireArrangementPanel({ wiringType, onComplete, onClose }) {
   const [pinIndex, setPinIndex] = useState(0);
   const [placed, setPlaced] = useState([Array(8).fill(null), Array(8).fill(null)]);
   const [message, setMessage] = useState(null);
+  const successPlayer = useVideoPlayer(successSound, (p) => {
+    p.loop = false;
+    p.muted = false;
+  });
 
   const activeOrder = getTargetOrder(wiringType, endIndex);
   const expectedWire = activeOrder[pinIndex];
@@ -86,7 +93,7 @@ export function Rj45WireArrangementPanel({ wiringType, onComplete, onClose }) {
 
   const chooseWire = (wireId) => {
     if (wireId !== expectedWire) {
-      setMessage(`Not quite. Pin ${pinIndex + 1} needs ${wireShortLabels[expectedWire]}.`);
+      setMessage('Not quite — check the reference order above and try again.');
       return;
     }
     const nextPlaced = placed.map((end) => [...end]);
@@ -103,6 +110,7 @@ export function Rj45WireArrangementPanel({ wiringType, onComplete, onClose }) {
     } else {
       setMode('complete');
       setMessage('Perfect arrangement on both RJ45 ends.');
+      successPlayer.play();
     }
   };
 

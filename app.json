@@ -62,7 +62,8 @@
             "microphoneUsagePermission": "ARplusCSS does not record audio; this permission is unused."
           }
         }
-      ]
+      ],
+      "expo-video"
     ],
     "extra": {
       "eas": {
