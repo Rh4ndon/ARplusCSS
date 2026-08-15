@@ -21,49 +21,48 @@ matters more than the phone brand.
 
 ```
 references/
-  motherboard/         6 photos (single arrangement — ASUS P5G41T-M LX3)
-  rj45/top/            4 photos (RJ45 connector, top / contacts-up view)
-  rj45/bottom/         4 photos (RJ45 connector, bottom view)
+  motherboard/         6 photos (single arrangement — ASUS P5G41T-M LX3, all front-on)
+  rj45/top/            3–4 photos (RJ45 connector, top / contacts-up view, front-on)
+  rj45/bottom/         3–4 photos (RJ45 connector, bottom view, front-on)
 ```
 
 ## Naming convention
 
-`<view>-<lighting>-<angle>-<device><n>.jpg` — lowercase, no spaces.
+`<view>-<angle>-<device><n>.jpg` — lowercase, no spaces.
 
 | part     | values                                        |
 |----------|-----------------------------------------------|
-| view     | `front`, `top`, `bottom`, `angled`            |
-| lighting | `bright`, `normal`, `dim`                     |
-| angle    | `straight`, `left`, `right`                   |
-| device   | `infinix` or `iphone`                         |
+| view     | `front`, `top`, `bottom`                      |
+| angle    | `straight` (only accepted view)               |
+| device   | `infinix` or `iphone` (optional)              |
 | n        | `a`, `b`, `c` when multiple shots share tags  |
 
 Examples:
 
-- `references/motherboard/front-bright-straight-infinix.jpg`
-- `references/motherboard/angled-left-b-iphone.jpg`
-- `references/rj45/top/front-normal-straight-infinix.jpg`
-- `references/rj45/top/angled-right-a-iphone.jpg`
-- `references/rj45/bottom/front-dim-straight-infinix.jpg`
+- `references/motherboard/front-straight-a.jpg`
+- `references/rj45/top/front-straight-iphone.jpg`
+
+> **Straight-only by design.** The app guides users to capture front-on, so
+> angled captures are *rejected* and no angled references are needed. The
+> brightness/contrast note: brightness isn't a required variant either — the
+> verification normalizes it, and overly dark shots are rejected by the quality
+> gate.
 
 ## Shot plan
 
-**motherboard (6):** 3 with Infinix, 3 with iPhone —
-- 1 front-on bright
-- 1 front-on dim
-- 1 angled (~20–30°) — pick left *or* right and vary the device
+**motherboard (6):** all front-on straight —
+- 6 shots (vary the device / framing if easy)
 
-**rj45/top (4):** 2 with Infinix, 2 with iPhone —
-- 1 front-on bright
-- 1 front-on dim (or angled if lighting is hard)
+**rj45/top (3–4):** all front-on straight —
+- 3–4 shots
 
-**rj45/bottom (4):** 2 with Infinix, 2 with iPhone —
-- 1 front-on bright
-- 1 front-on dim (or angled if lighting is hard)
+**rj45/bottom (3–4):** all front-on straight —
+- 3–4 shots
 
 ## Checklist
 
-- [ ] motherboard: 6 photos (3 Infinix + 3 iPhone: bright, dim, angled)
-- [ ] rj45/top: 4 photos (2 Infinix + 2 iPhone)
-- [ ] rj45/bottom: 4 photos (2 Infinix + 2 iPhone)
+- [x] motherboard: 6 photos (all front-on straight) — done
+- [ ] rj45/top: 3–4 photos (front-on straight)
+- [ ] rj45/bottom: 3–4 photos (front-on straight)
+- [ ] All shots: object centered, same scale, well lit, 4:3 frame
 - [ ] All shots: object centered, same scale, well lit, 4:3 frame
