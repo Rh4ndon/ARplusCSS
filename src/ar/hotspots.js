@@ -21,13 +21,13 @@ export const motherboardHotspots = [
   {
     id: 'atx24',
     position: [0.075, 0.02, 0.015],
-    size: [0.015, 0.055],
+    size: [0.020, 0.060],
     color: '#fbbf24',
   },
   {
     id: 'eps4',
     position: [-0.07, 0.02, -0.1],
-    size: [0.03, 0.03],
+    size: [0.04, 0.04],
     color: '#a78bfa',
   },
   {

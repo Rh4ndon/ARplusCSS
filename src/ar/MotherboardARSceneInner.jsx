@@ -32,7 +32,7 @@ ViroMaterials.createMaterials({
     lightingModel: 'Constant',
   },
   hotspotAvailable: {
-    diffuseColor: '#3b82f6',
+    diffuseColor: '#fcf98c',
     lightingModel: 'Constant',
   },
 });
