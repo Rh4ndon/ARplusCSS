@@ -17,12 +17,19 @@ import { Rj45WireArrangementPanel } from './Rj45WireArrangementPanel';
 import { registerRj45TrackingTarget, RJ45_TARGET_NAME } from '../trackingTargets';
 import { colors } from '../../theme/colors';
 
-const stepVideoMap = {
-  strip: require('../../../assets/videos/strip.mp4'),
-  untwist: require('../../../assets/videos/untwist.mp4'),
-  trim: require('../../../assets/videos/trim.mp4'),
-  crimp: require('../../../assets/videos/crimp.mp4'),
+const trimVideos = {
+  crossover: require('../../../assets/videos/trim-crossover.mov'),
+  straight: require('../../../assets/videos/trim-straight-through.mov'),
 };
+
+function getStepVideoMap(wiringType) {
+  return {
+    strip: require('../../../assets/videos/strip.mov'),
+    untwist: require('../../../assets/videos/untwist.mov'),
+    trim: trimVideos[wiringType],
+    crimp: require('../../../assets/videos/crimp.mov'),
+  };
+}
 
 const lessonButtonLabels = {
   strip: '1. Strip',
@@ -54,6 +61,8 @@ export function ARRj45Scene({ wiringType, onExit, markerUri, markerPhysicalWidth
   const [showStepGrid, setShowStepGrid] = useState(true);
   const [showWirePanel, setShowWirePanel] = useState(false);
   const congratsShown = useRef(false);
+
+  const stepVideoMap = React.useMemo(() => getStepVideoMap(wiringType), [wiringType]);
 
   const congratsPlayer = useVideoPlayer(congratsSound, (p) => { p.loop = false; });
 
@@ -157,7 +166,7 @@ export function ARRj45Scene({ wiringType, onExit, markerUri, markerPhysicalWidth
     } else {
       closeGuide();
     }
-  }, [activeStep, closeGuide]);
+  }, [activeStep, stepVideoMap, closeGuide]);
 
   const handleCloseVideo = useCallback(() => {
     const completedVideoStep = videoStep;
@@ -273,6 +282,7 @@ export function ARRj45Scene({ wiringType, onExit, markerUri, markerPhysicalWidth
       <StepVideoPlayer
         visible={videoStep !== null}
         videoSource={videoStep ? stepVideoMap[videoStep] : null}
+        aspectRatio={videoStep === 'trim' ? 9 / 16 : 16 / 9}
         onExit={handleCloseVideo}
       />
       <Modal visible={showCongrats} transparent animationType="fade">

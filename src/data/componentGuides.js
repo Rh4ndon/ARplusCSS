@@ -34,6 +34,7 @@ export const componentGuides = {
       'Ground yourself before handling the processor.',
     ],
     animationKey: 'cpu',
+    voiceOver: '../../assets/sounds/hardware-voice-over/cpu.m4a',
   },
   cpuBlock: {
     id: 'cpuBlock',
@@ -70,6 +71,7 @@ export const componentGuides = {
       'Do not overtighten screws; even pressure prevents board flex.',
     ],
     animationKey: 'cpuBlock',
+    voiceOver: '../../assets/sounds/hardware-voice-over/cpu-block.m4a',
   },
   ram: {
     id: 'ram',
@@ -105,6 +107,7 @@ export const componentGuides = {
       'Press straight down to avoid bending pins on the stick.',
     ],
     animationKey: 'ram',
+    voiceOver: '../../assets/sounds/hardware-voice-over/ram.m4a',
   },
   atx24: {
     id: 'atx24',
@@ -141,6 +144,7 @@ export const componentGuides = {
       'Do not force a 20+4 adapter the wrong way around.',
     ],
     animationKey: 'atx24',
+    voiceOver: '../../assets/sounds/hardware-voice-over/atx24.m4a',
   },
   eps4: {
     id: 'eps4',
@@ -172,6 +176,7 @@ export const componentGuides = {
       'Route the cable behind the motherboard tray for a cleaner build.',
     ],
     animationKey: 'eps4',
+    voiceOver: '../../assets/sounds/hardware-voice-over/eps4.m4a',
   },
   sata: {
     id: 'sata',
@@ -208,6 +213,7 @@ export const componentGuides = {
       'Avoid sharp bends that can crack the cable near the connector.',
     ],
     animationKey: 'sata',
+    voiceOver: '../../assets/sounds/hardware-voice-over/sata.m4a',
   },
   frontPanelUsb: {
     id: 'frontPanelUsb',
@@ -239,6 +245,7 @@ export const componentGuides = {
       'USB 2.0 and USB 3.x front-panel connectors are different shapes — do not mix them.',
     ],
     animationKey: 'frontPanelUsb',
+    voiceOver: '../../assets/sounds/hardware-voice-over/front-panel-usb.m4a',
   },
   switches: {
     id: 'switches',
@@ -275,6 +282,7 @@ export const componentGuides = {
       'Keep front-panel wires clear of fans and sharp case edges.',
     ],
     animationKey: 'switches',
+    voiceOver: '../../assets/sounds/hardware-voice-over/switches.m4a',
   },
   gpu: {
     id: 'gpu',
@@ -311,5 +319,6 @@ export const componentGuides = {
       'Use separate PSU cables for multi-connector GPUs when possible.',
     ],
     animationKey: 'gpu',
+    voiceOver: '../../assets/sounds/hardware-voice-over/gpu.m4a',
   },
 };

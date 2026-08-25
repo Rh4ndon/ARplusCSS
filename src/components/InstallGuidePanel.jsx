@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Modal,
   Pressable,
@@ -8,13 +8,51 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useVideoPlayer } from 'expo-video';
 import { colors } from '../theme/colors';
+
+const voiceOverAssets = {
+  // Hardware voice overs
+  cpu: require('../../assets/sounds/hardware-voice-over/cpu.m4a'),
+  cpuBlock: require('../../assets/sounds/hardware-voice-over/cpu-block.m4a'),
+  ram: require('../../assets/sounds/hardware-voice-over/ram.m4a'),
+  atx24: require('../../assets/sounds/hardware-voice-over/atx24.m4a'),
+  eps4: require('../../assets/sounds/hardware-voice-over/eps4.m4a'),
+  sata: require('../../assets/sounds/hardware-voice-over/sata.m4a'),
+  frontPanelUsb: require('../../assets/sounds/hardware-voice-over/front-panel-usb.m4a'),
+  switches: require('../../assets/sounds/hardware-voice-over/switches.m4a'),
+  gpu: require('../../assets/sounds/hardware-voice-over/gpu.m4a'),
+  // Network voice overs
+  strip: require('../../assets/sounds/network-voice-over/strip.m4a'),
+  untwist: require('../../assets/sounds/network-voice-over/untwist.m4a'),
+  trim: require('../../assets/sounds/network-voice-over/trim.m4a'),
+  insert: require('../../assets/sounds/network-voice-over/insert.m4a'),
+  crimp: require('../../assets/sounds/network-voice-over/crimp.m4a'),
+  'wire-order-straight-through': require('../../assets/sounds/network-voice-over/wire-order-straight-through.m4a'),
+  'wire-order-crossover': require('../../assets/sounds/network-voice-over/wire-order-crossover.m4a'),
+};
+
+function GuideVoiceOver({ animationKey }) {
+  const source = voiceOverAssets[animationKey];
+  const player = useVideoPlayer(source, (p) => {
+    p.loop = false;
+  });
+
+  useEffect(() => {
+    if (player && source) {
+      player.play();
+    }
+  }, [player, source]);
+
+  return null;
+}
 
 export function InstallGuidePanel({ guide, onClose, primaryActionLabel = 'Back', onPrimaryAction, onBackWithVideo }) {
   const insets = useSafeAreaInsets();
 
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
+      {guide.animationKey && <GuideVoiceOver animationKey={guide.animationKey} />}
       <View style={styles.fill}>
         <View style={styles.backdropArea} />
         <View style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]}>

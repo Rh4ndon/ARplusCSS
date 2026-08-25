@@ -13,6 +13,7 @@ const baseSteps = {
       { title: 'Pull jacket', detail: 'Slide jacket off and check that pair insulation is intact.' },
     ],
     safetyTips: ['Keep blades sharp to avoid pulling on wires.', 'Wear eye protection when cutting many cables.'],
+    voiceOver: '../../assets/sounds/network-voice-over/strip.m4a',
   },
   untwist: {
     id: 'untwist',
@@ -25,18 +26,19 @@ const baseSteps = {
       { title: 'Fan out', detail: 'Spread all eight wires flat in one plane ready for the color order.' },
     ],
     safetyTips: ['Excess untwisting hurts signal quality at high speeds.'],
+    voiceOver: '../../assets/sounds/network-voice-over/untwist.m4a',
   },
   trim: {
     id: 'trim',
     shortLabel: 'Trim',
-    label: 'Strip & Trim Wires',
+    label: 'Strip and Trim Wires',
     summary: 'Strip insulation from each individual conductor and trim them to even length for insertion.',
     steps: [
-      { title: 'Strip individual wires', detail: 'Use wire strippers to remove a small amount of insulation from each individual conductor.' },
       { title: 'Align in order', detail: 'Keep all eight wires flat, straight, and in the correct T568B color order.' },
       { title: 'Trim evenly', detail: 'Cut all conductors to the same length (about 12–13 mm) so they seat properly in the plug.' },
     ],
     safetyTips: ['Do not strip too much insulation—only expose enough for the plug contacts.', 'Keep wire order intact while trimming.'],
+    voiceOver: '../../assets/sounds/network-voice-over/trim.m4a',
   },
   insert: {
     id: 'insert',
@@ -49,6 +51,7 @@ const baseSteps = {
       { title: 'Verify', detail: 'Jacket should enter the strain relief area of the plug.' },
     ],
     safetyTips: ['If a wire slips back, pull out and re-order from the untwist step.'],
+    voiceOver: '../../assets/sounds/network-voice-over/insert.m4a',
   },
   crimp: {
     id: 'crimp',
@@ -61,6 +64,7 @@ const baseSteps = {
       { title: 'Tug test', detail: 'Gently pull the cable—plug should not move. Test with a cable tester if available.' },
     ],
     safetyTips: ['Use an RJ45 die matched to your plug type (pass-through vs standard).'],
+    voiceOver: '../../assets/sounds/network-voice-over/crimp.m4a',
   },
 };
 
@@ -75,6 +79,7 @@ const orderStraight = {
     { title: 'Mnemonic', detail: 'Remember: straight-through = same standard on both sides.' },
   ],
   safetyTips: ['Straight-through is used for host-to-switch or host-to-router LAN ports.'],
+  voiceOver: '../../assets/sounds/network-voice-over/wire-order-straight-through.m4a',
 };
 
 const orderCrossover = {
@@ -90,6 +95,7 @@ const orderCrossover = {
   safetyTips: [
     'Modern Auto-MDIX ports often work with straight cables—crossover is still taught for servicing skills.',
   ],
+  voiceOver: '../../assets/sounds/network-voice-over/wire-order-crossover.m4a',
 };
 
 export const cablingStepIds = ['strip', 'untwist', 'trim', 'order', 'insert', 'crimp'];
@@ -100,10 +106,13 @@ export function getCablingGuide(wiringType, stepId) {
   if (!step) {
     return null;
   }
+  const animationKey = stepId === 'order'
+    ? (wiringType === WIRING_CROSSOVER ? 'wire-order-crossover' : 'wire-order-straight-through')
+    : stepId;
   return {
     ...step,
     wiringType,
-    animationKey: stepId,
+    animationKey,
   };
 }
 

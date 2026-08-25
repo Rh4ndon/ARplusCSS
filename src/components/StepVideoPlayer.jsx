@@ -3,7 +3,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export function StepVideoPlayer({ visible, videoSource, onExit }) {
+export function StepVideoPlayer({ visible, videoSource, onExit, aspectRatio = 16 / 9 }) {
   const insets = useSafeAreaInsets();
 
   const player = useVideoPlayer(videoSource, (p) => {
@@ -12,10 +12,17 @@ export function StepVideoPlayer({ visible, videoSource, onExit }) {
     p.play();
   });
 
+  React.useEffect(() => {
+    if (visible && videoSource) {
+      player.currentTime = 0;
+      player.play();
+    }
+  }, [visible, videoSource, player]);
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onExit}>
       <View style={styles.backdrop}>
-        <View style={[styles.container, { marginTop: insets.top + 40, marginBottom: insets.bottom + 40 }]}>
+        <View style={[styles.container, aspectRatio < 1 && styles.containerPortrait]}>
           <View style={styles.header}>
             <Text style={styles.title}>Demonstration</Text>
             <Pressable style={styles.exitBtn} onPress={onExit}>
@@ -23,7 +30,7 @@ export function StepVideoPlayer({ visible, videoSource, onExit }) {
             </Pressable>
           </View>
 
-          <View style={styles.videoWrapper}>
+          <View style={styles.videoContainer}>
             <VideoView
               style={styles.video}
               player={player}
@@ -47,11 +54,15 @@ const styles = StyleSheet.create({
   },
   container: {
     width: '100%',
+    height: '75%',
     backgroundColor: '#0a0e17',
     borderRadius: 16,
     borderWidth: 1,
     borderColor: 'rgba(59,130,246,0.4)',
     overflow: 'hidden',
+  },
+  containerPortrait: {
+    height: '85%',
   },
   header: {
     flexDirection: 'row',
@@ -61,6 +72,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(59,130,246,0.2)',
+    zIndex: 10,
   },
   title: {
     color: '#f1f5f9',
@@ -80,10 +92,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 13,
   },
-  videoWrapper: {
-    width: '100%',
-    aspectRatio: 16 / 9,
-    backgroundColor: '#000000',
+  videoContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    paddingTop: 8,
   },
   video: {
     width: '100%',
