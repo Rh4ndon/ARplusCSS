@@ -53,6 +53,10 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
   const [phase, setPhase] = useState('align');
   const lastComponentId = useRef(null);
   const prevInstalledCount = useRef(0);
+  const [panelPos, setPanelPos] = useState({ x: 0, y: 0 });
+  const movePanel = useCallback((dx, dy) => {
+    setPanelPos((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
+  }, []);
 
   const prevLoading = useRef(false);
   const installPlayer = useVideoPlayer(installSound, (p) => { p.loop = false; });
@@ -270,9 +274,25 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
           onExit={onExit}
         >
         <View
-          style={[styles.placementControls, showPlacementControls ? styles.placementOn : styles.placementOff]}
+          style={[
+            styles.placementControls,
+            showPlacementControls ? styles.placementOn : styles.placementOff,
+            { transform: [{ translateX: panelPos.x }, { translateY: panelPos.y }] },
+          ]}
           pointerEvents={showPlacementControls ? 'auto' : 'none'}
         >
+          <Pressable style={[styles.reposArrow, styles.reposUp]} onPress={() => movePanel(0, -20)}>
+            <Text style={styles.reposArrowText}>▲</Text>
+          </Pressable>
+          <Pressable style={[styles.reposArrow, styles.reposDown]} onPress={() => movePanel(0, 20)}>
+            <Text style={styles.reposArrowText}>▼</Text>
+          </Pressable>
+          <Pressable style={[styles.reposArrow, styles.reposLeft]} onPress={() => movePanel(-20, 0)}>
+            <Text style={styles.reposArrowText}>◀</Text>
+          </Pressable>
+          <Pressable style={[styles.reposArrow, styles.reposRight]} onPress={() => movePanel(20, 0)}>
+            <Text style={styles.reposArrowText}>▶</Text>
+          </Pressable>
           <Text style={styles.placementHint}>Move the component over the blue slot</Text>
           <View style={styles.dpad}>
             <Pressable
@@ -389,7 +409,8 @@ const styles = StyleSheet.create({
   },
   placementControls: {
     position: 'absolute',
-    alignSelf: 'center',
+    left: '50%',
+    marginLeft: -90,
     width: 180,
     alignItems: 'center',
     backgroundColor: 'rgba(10,14,23,0.5)',
@@ -406,6 +427,26 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
+  reposArrow: {
+    position: 'absolute',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    zIndex: 10,
+  },
+  reposArrowText: {
+    color: '#ffffff',
+    fontSize: 12,
+  },
+  reposUp: { top: -14, alignSelf: 'center' },
+  reposDown: { bottom: -14, alignSelf: 'center' },
+  reposLeft: { left: -14, top: '50%', marginTop: -14 },
+  reposRight: { right: -14, top: '50%', marginTop: -14 },
   dpad: {
     alignItems: 'center',
     gap: 4,
