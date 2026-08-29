@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { colors } from '../theme/colors';
 import { saveMarkerImage, saveMarkerConfig } from '../utils/markerStorage';
+import { verifyMotherboard } from '../utils/markerVerification';
 
 const DEFAULTS = {
   motherboard: 24,
@@ -35,6 +36,9 @@ export function MarkerCaptureScreen({ navigation, route }) {
   const [captured, setCaptured] = useState(null);
   const [ready, setReady] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [verificationResult, setVerificationResult] = useState(null);
+  const [zoom, setZoom] = useState(0);
   const camRef = useRef(null);
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -51,6 +55,11 @@ export function MarkerCaptureScreen({ navigation, route }) {
   const [physicalWidth, setPhysicalWidth] = useState(String(defaultWidth));
 
   const frameSize = width * 0.78;
+
+  const ZOOM_STEP = 0.1;
+  const ZOOM_MAX = 0.5;
+  const handleZoomIn = () => setZoom(z => Math.min(z + ZOOM_STEP, ZOOM_MAX));
+  const handleZoomOut = () => setZoom(z => Math.max(z - ZOOM_STEP, 0));
 
   function renderSmallFrame() {
     const frameSize = width * RJ45_FRAME_RATIO;
@@ -73,6 +82,20 @@ export function MarkerCaptureScreen({ navigation, route }) {
         quality: 1.0,
       });
       setCaptured(photo);
+      setVerificationResult(null);
+
+      if (markerType === 'motherboard') {
+        setVerifying(true);
+        try {
+          const result = await verifyMotherboard(photo.uri);
+          setVerificationResult(result);
+        } catch (err) {
+          console.log('[CAPTURE] verification error', err);
+          setVerificationResult({ isMatch: false, distance: Infinity });
+        } finally {
+          setVerifying(false);
+        }
+      }
     } catch (e) {
       console.log('[CAPTURE] error taking picture', e);
     }
@@ -80,6 +103,8 @@ export function MarkerCaptureScreen({ navigation, route }) {
 
   const handleRetake = () => {
     setCaptured(null);
+    setVerificationResult(null);
+    setVerifying(false);
   };
 
   const handleConfirm = async () => {
@@ -125,9 +150,19 @@ export function MarkerCaptureScreen({ navigation, route }) {
   }
 
   if (captured) {
+    const verificationFailed = locked && verificationResult && !verificationResult.isMatch;
+    const verificationPassed = locked && verificationResult && verificationResult.isMatch;
+    const usePhotoDisabled = saving || verificationFailed;
+
     return (
       <View style={[styles.fill, { paddingTop: insets.top }]}>
         <Image source={{ uri: captured.uri }} style={styles.preview} resizeMode="contain" />
+
+        {verifying && (
+          <View style={styles.verifyingOverlay}>
+            <Text style={styles.verifyingText}>Verifying image…</Text>
+          </View>
+        )}
 
         {saving && (
           <View style={styles.savingOverlay}>
@@ -157,11 +192,31 @@ export function MarkerCaptureScreen({ navigation, route }) {
             </View>
           )}
 
+          {verificationPassed && (
+            <View style={styles.verifiedBadge}>
+              <Text style={styles.verifiedBadgeText}>✓ Motherboard detected — you may proceed</Text>
+            </View>
+          )}
+
+          {verificationFailed && (
+            <View style={styles.verificationError}>
+              <Text style={styles.verificationErrorText}>
+                {!verificationResult.colorMatch
+                  ? 'This does not appear to be a motherboard — the expected PCB colors were not detected. Please capture your actual motherboard for the AR demo.'
+                  : 'This does not appear to be a motherboard. Please capture your actual motherboard for the AR demo.'}
+              </Text>
+            </View>
+          )}
+
           <View style={styles.buttonRow}>
             <Pressable style={[styles.secondaryBtn, saving && styles.disabledBtn]} onPress={handleRetake} disabled={saving}>
               <Text style={styles.secondaryBtnText}>Retake</Text>
             </Pressable>
-            <Pressable style={[styles.actionBtn, saving && styles.disabledBtn]} onPress={handleConfirm} disabled={saving}>
+            <Pressable
+              style={[styles.actionBtn, usePhotoDisabled && styles.disabledBtn]}
+              onPress={handleConfirm}
+              disabled={usePhotoDisabled}
+            >
               <Text style={styles.actionBtnText}>Use Photo</Text>
             </Pressable>
           </View>
@@ -186,6 +241,7 @@ export function MarkerCaptureScreen({ navigation, route }) {
         style={styles.camera}
         facing="back"
         ratio="4:3"
+        zoom={zoom}
         onCameraReady={() => setReady(true)}
       />
       <View style={[styles.overlay, { paddingTop: insets.top + 16 }]}>
@@ -200,6 +256,15 @@ export function MarkerCaptureScreen({ navigation, route }) {
         <Text style={styles.overlayLabel}>
           {isSmallMarker ? `Center the ${label} in the frame` : `Fill the screen with the ${label}`}
         </Text>
+        <View style={styles.zoomControls}>
+          <Pressable style={styles.zoomBtn} onPress={handleZoomIn}>
+            <Text style={styles.zoomBtnText}>+</Text>
+          </Pressable>
+          <Text style={styles.zoomLabel}>{Math.round(zoom * 200)}%</Text>
+          <Pressable style={styles.zoomBtn} onPress={handleZoomOut}>
+            <Text style={styles.zoomBtnText}>-</Text>
+          </Pressable>
+        </View>
       </View>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
@@ -399,5 +464,80 @@ const styles = StyleSheet.create({
     fontSize: 15,
     textAlign: 'center',
     padding: 40,
+  },
+  verifyingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    zIndex: 99,
+  },
+  verifyingText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  verifiedBadge: {
+    backgroundColor: 'rgba(52,211,153,0.15)',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(52,211,153,0.4)',
+  },
+  verifiedBadgeText: {
+    color: colors.success,
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  verificationError: {
+    backgroundColor: 'rgba(239,68,68,0.15)',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.4)',
+  },
+  verificationErrorText: {
+    color: '#f87171',
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  zoomControls: {
+    position: 'absolute',
+    right: 16,
+    top: '50%',
+    marginTop: -60,
+    alignItems: 'center',
+    gap: 8,
+  },
+  zoomBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  zoomBtnText: {
+    color: '#ffffff',
+    fontSize: 22,
+    fontWeight: '700',
+    lineHeight: 24,
+  },
+  zoomLabel: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '600',
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    overflow: 'hidden',
   },
 });

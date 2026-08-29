@@ -7,6 +7,7 @@ Educational Android AR app for PC building and network cabling. Built with React
 ## Phase 1 — Foundation & AR Setup
 
 ### Capture-based image tracking (both lessons)
+
 - [x] `MarkerCaptureScreen` — camera capture screen used by both lessons (`type: motherboard` | `rj45`)
 - [x] Captured image becomes the AR tracking target (no printed markers)
 - [x] Motherboard target registration (`registerMotherboardTrackingTarget`)
@@ -17,6 +18,7 @@ Educational Android AR app for PC building and network cabling. Built with React
 - [x] **Stale-marker bug fix** — re-capturing a marker after Exit kept the old image cached. Fixed with **per-capture unique target names + unique filenames**, and marker files reset when returning to the Network Cabling screen. Confirmed working on device.
 
 ### Network (RJ45 Cabling)
+
 - [x] Network cabling setup screen (straight-through / crossover choice) → routes through MarkerCapture
 - [x] T568A/T568B wire-color challenge panel (gates Insert/Crimp steps)
 - [x] Straight-through vs crossover wire order handling
@@ -28,14 +30,14 @@ Educational Android AR app for PC building and network cabling. Built with React
 
 ### Motherboard — Component Installation
 
-| Component | Hotspot | Guide Content | Tap → Install |
-|-----------|---------|---------------|---------------|
-| CPU | ✅ | ✅ | ✅ |
-| CPU Block | ✅ | ✅ | ⬜ |
-| RAM | ✅ | ✅ | ⬜ |
-| 24-Pin ATX | ✅ | ✅ | ⬜ |
-| 4-Pin EPS | ✅ | ✅ | ⬜ |
-| GPU (PCIe) | ✅ | ✅ | ⬜ |
+| Component  | Hotspot | Guide Content | Tap → Install |
+| ---------- | ------- | ------------- | ------------- |
+| CPU        | ✅      | ✅            | ✅            |
+| CPU Block  | ✅      | ✅            | ⬜            |
+| RAM        | ✅      | ✅            | ⬜            |
+| 24-Pin ATX | ✅      | ✅            | ⬜            |
+| 4-Pin EPS  | ✅      | ✅            | ⬜            |
+| GPU (PCIe) | ✅      | ✅            | ⬜            |
 
 - [x] Tap detection via `onClickState` on the motherboard model
 - [x] Sequential install prerequisites ("Install CPU first" guard)
@@ -43,14 +45,14 @@ Educational Android AR app for PC building and network cabling. Built with React
 
 ### Network — Cabling Steps
 
-| Step | Guide Content | Tap → Animation |
-|------|---------------|-----------------|
-| Strip | ✅ | ⬜ |
-| Untwist | ✅ | ⬜ |
-| Order (T568B/A) | ✅ | ✅ (wire arrangement challenge) |
-| Trim | ✅ | ⬜ |
-| Insert | ✅ | ✅ (`Rj45InsertionAnimation`) |
-| Crimp | ✅ | ⬜ |
+| Step            | Guide Content | Tap → Animation                 |
+| --------------- | ------------- | ------------------------------- |
+| Strip           | ✅            | ⬜                              |
+| Untwist         | ✅            | ⬜                              |
+| Order (T568B/A) | ✅            | ✅ (wire arrangement challenge) |
+| Trim            | ✅            | ⬜                              |
+| Insert          | ✅            | ✅ (`Rj45InsertionAnimation`)   |
+| Crimp           | ✅            | ⬜                              |
 
 - [ ] Wire remaining 5 cabling step animations
 
@@ -59,11 +61,13 @@ Educational Android AR app for PC building and network cabling. Built with React
 ## Phase 3 — Guide Panel & Education Layer
 
 ### Motherboard
+
 - [x] `InstallGuidePanel` (steps + safety tips, replay animation)
 - [x] Descriptions in `componentGuides.js` for all 6 components
 - [x] HUD status line + info toggle
 
 ### Network
+
 - [x] `InstallGuidePanel` reused for cabling steps
 - [x] `Rj45WireArrangementPanel` (wire colors challenge with completion gating)
 - [ ] Educational descriptions per cabling step (uses guide panel already)
@@ -105,4 +109,3 @@ Educational Android AR app for PC building and network cabling. Built with React
 - **Motherboard position:** `[-0.01, 0.01, 0]`, scale `[0.25, 0.25, 0.25]`, rotation `[1, 181, 3]`.
 - **Install order:** CPU → CPU Block → RAM; ATX/4-Pin EPS/GPU require only CPU.
 - **Cabling wiring types:** Straight-through (T568B both ends) and crossover (T568A ↔ T568B).
-- **Torch / flashlight:** **OPTIONAL** — Expo's built-in `Torch` module conflicts with the AR camera session. Skipping unless needed.
