@@ -8,10 +8,13 @@ const PROBE_TIMEOUT_MS = 8000;
  * reports itself as installed/supported. Matched against the native probe
  * result (or `Platform.constants` when the native module is unavailable).
  *
- * OPPO A6 Pro 5G (CPH2781 / OP5E1BL1): the preinstalled ARCore has no camera
- * calibration profile for this build and the vendor motion-tracking camera tag
- * is missing, so native session creation returns an invalid handle and
- * ViroReact dereferences it -> native SIGSEGV. See the ar-availability module.
+ * OPPO A6 Pro 5G (CPH2781 / OP5E1BL1): the phone has no physical gyroscope -
+ * only a virtual one synthesised from the accelerometer and magnetometer - so
+ * ARCore has no device profile for it and refuses to start a session. ViroReact
+ * ignores that failure and dereferences the invalid session -> native SIGSEGV.
+ *
+ * This list is a fast, offline fallback; the native probe (gyroscope + session
+ * check) is authoritative and catches the same class of device generically.
  */
 export const AR_DEVICE_BLOCKLIST = [
   {
@@ -20,7 +23,7 @@ export const AR_DEVICE_BLOCKLIST = [
     brand: 'OPPO',
     label: 'OPPO A6 Pro 5G',
     reason:
-      'This OPPO model is missing the camera calibration data required by the AR engine, so AR cannot start on it.',
+      'This phone has no gyroscope, which the AR engine needs to track movement, so AR cannot start on it.',
   },
 ];
 
@@ -102,8 +105,20 @@ function availabilityReason(availability) {
   }
 }
 
+const GYROSCOPE_MISSING_REASON =
+  'This phone has no gyroscope, which the AR engine needs to track movement, so AR cannot start on it.';
+
+const SESSION_INCOMPATIBLE_REASON =
+  'The AR engine on this device cannot start a session here, so augmented reality is unavailable.';
+
 function canInstallFor(availability) {
   return availability === 'SUPPORTED_NOT_INSTALLED' || availability === 'SUPPORTED_APK_TOO_OLD';
+}
+
+function deviceSummary(info) {
+  if (!info) return undefined;
+  const label = [info.manufacturer, info.model].filter(Boolean).join(' ').trim();
+  return { label: label || undefined, model: info.model ?? null, device: info.device ?? null };
 }
 
 async function probeNativeAvailability() {
@@ -164,6 +179,26 @@ export async function getARSupport() {
   }
 
   if (probeRan && !info?.transient) {
+    if (info?.sessionProbe === 'DEVICE_NOT_COMPATIBLE') {
+      return {
+        supported: false,
+        source: 'session',
+        reason: SESSION_INCOMPATIBLE_REASON,
+        availability,
+        canInstall: false,
+        device: deviceSummary(info),
+      };
+    }
+    if (info?.hasGyroscope === false) {
+      return {
+        supported: false,
+        source: 'gyroscope',
+        reason: GYROSCOPE_MISSING_REASON,
+        availability,
+        canInstall: false,
+        device: deviceSummary(info),
+      };
+    }
     if (info?.unsupported) {
       return {
         supported: false,
