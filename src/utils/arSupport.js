@@ -108,9 +108,6 @@ function availabilityReason(availability) {
 const GYROSCOPE_MISSING_REASON =
   'This phone has no gyroscope, which the AR engine needs to track movement, so AR cannot start on it.';
 
-const SESSION_INCOMPATIBLE_REASON =
-  'The AR engine on this device cannot start a session here, so augmented reality is unavailable.';
-
 function canInstallFor(availability) {
   return availability === 'SUPPORTED_NOT_INSTALLED' || availability === 'SUPPORTED_APK_TOO_OLD';
 }
@@ -179,16 +176,6 @@ export async function getARSupport() {
   }
 
   if (probeRan && !info?.transient) {
-    if (info?.sessionProbe === 'DEVICE_NOT_COMPATIBLE') {
-      return {
-        supported: false,
-        source: 'session',
-        reason: SESSION_INCOMPATIBLE_REASON,
-        availability,
-        canInstall: false,
-        device: deviceSummary(info),
-      };
-    }
     if (info?.hasGyroscope === false) {
       return {
         supported: false,

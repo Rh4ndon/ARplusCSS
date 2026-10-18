@@ -7,8 +7,6 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import com.google.ar.core.ArCoreApk
-import com.google.ar.core.Session
-import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import expo.modules.kotlin.Promise
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -19,17 +17,16 @@ import java.util.concurrent.atomic.AtomicBoolean
  *
  * `ArCoreApk.checkAvailability()` can report SUPPORTED_INSTALLED on devices whose
  * ARCore build cannot actually start a session - for example a phone with no
- * physical gyroscope (ARCore requires one) or a build with no camera calibration
- * profile. ViroReact ignores that failure, dereferences the invalid native session
- * and crashes with a SIGSEGV.
+ * physical gyroscope (ARCore requires one to fuse motion). ViroReact ignores that
+ * failure, dereferences the invalid native session and crashes with a SIGSEGV.
  *
- * To detect these devices generically we:
- *   1. look for a physical gyroscope (ARCore cannot track motion without one), and
- *   2. create an ARCore `Session` ourselves and immediately close it.
- *
- * Creating a session through ARCore's own Java API is safe: it throws
- * `UnavailableDeviceNotCompatibleException` rather than crashing, unlike Viro's
- * native path. A session is only ever created here - never handed to the renderer.
+ * Detection here is based on the physical gyroscope only. We deliberately DO NOT
+ * create an ARCore `Session` as a probe: `new Session(context)` does not throw a
+ * catchable exception on such devices - it hard-crashes with SIGSEGV inside
+ * `libarcore_c.so` (`ArSession_createWithFeaturesImplementation`), taking the app
+ * down before JS can react. That crash happens even on devices where ARCore
+ * otherwise works (real gyro + ARCore installed), so creating a session here is
+ * never safe.
  */
 class ARAvailabilityModule : Module() {
   override fun definition() = ModuleDefinition {
@@ -45,7 +42,7 @@ class ARAvailabilityModule : Module() {
 
       if (context == null) {
         promise.resolve(
-          base + gyroscopeFields(null) + sessionFields("SKIPPED", null) +
+          base + gyroscopeFields(null) +
             availabilityFields("UNKNOWN_ERROR", false, false, true, true)
         )
         return@AsyncFunction
@@ -57,15 +54,10 @@ class ARAvailabilityModule : Module() {
       // Fast path: a synchronous check is definitive once ARCore is installed.
       val immediate = runCatching { arcore.checkAvailability(context) }.getOrNull()
       if (immediate != null && !immediate.isTransient()) {
-        if (immediate == ArCoreApk.Availability.SUPPORTED_INSTALLED) {
-          // ARCore claims to be installed: prove a session can really be created.
-          probeSession(context, base + gyro, promise)
-        } else {
-          promise.resolve(
-            base + gyro + sessionFields("SKIPPED", null) +
-              availabilityFields(immediate.name, immediate.isSupported, immediate.isUnsupported, immediate.isUnknown, false)
-          )
-        }
+        promise.resolve(
+          base + gyro +
+            availabilityFields(immediate.name, immediate.isSupported, immediate.isUnsupported, immediate.isUnknown, false)
+        )
         return@AsyncFunction
       }
 
@@ -75,7 +67,7 @@ class ARAvailabilityModule : Module() {
       handler.postDelayed({
         if (settled.compareAndSet(false, true)) {
           promise.resolve(
-            base + gyro + sessionFields("SKIPPED", null) +
+            base + gyro +
               availabilityFields("UNKNOWN_TIMED_OUT", false, false, true, true)
           )
         }
@@ -85,7 +77,7 @@ class ARAvailabilityModule : Module() {
         arcore.checkAvailabilityAsync(context) { availability ->
           if (settled.compareAndSet(false, true)) {
             promise.resolve(
-              base + gyro + sessionFields("SKIPPED", null) +
+              base + gyro +
                 availabilityFields(
                   availability.name,
                   availability.isSupported,
@@ -99,7 +91,7 @@ class ARAvailabilityModule : Module() {
       }.onFailure { error ->
         if (settled.compareAndSet(false, true)) {
           promise.resolve(
-            base + gyro + sessionFields("SKIPPED", null) +
+            base + gyro +
               availabilityFields("UNKNOWN_ERROR", false, false, true, false) +
               mapOf("error" to (error.message ?: error.javaClass.simpleName))
           )
@@ -120,31 +112,6 @@ class ARAvailabilityModule : Module() {
       } catch (error: Throwable) {
         promise.reject("E_AR_INSTALL", error.message ?: "ARCore install request failed", error)
       }
-    }
-  }
-
-  /**
-   * Creates an ARCore session on the main thread and closes it right away. This
-   * is the authoritative test of whether ARCore can actually run here. Any
-   * failure other than "device not compatible" is reported but not treated as a
-   * veto, so a transient fault never blocks AR on a capable device.
-   */
-  private fun probeSession(context: Context, base: Map<String, Any>, promise: Promise) {
-    val handler = Handler(Looper.getMainLooper())
-    handler.post {
-      var status = "OK"
-      var errorName: String? = null
-      try {
-        val session = Session(context.applicationContext)
-        session.close()
-      } catch (error: Throwable) {
-        errorName = error.javaClass.simpleName
-        status = if (error is UnavailableDeviceNotCompatibleException) "DEVICE_NOT_COMPATIBLE" else "ERROR"
-      }
-      promise.resolve(
-        base + sessionFields(status, errorName) +
-          availabilityFields("SUPPORTED_INSTALLED", true, false, false, false)
-      )
     }
   }
 
@@ -179,11 +146,6 @@ class ARAvailabilityModule : Module() {
     val virtualMarkers = listOf("virtual", "pseudo", "fusion", "synthetic", "corrected", "aosp", "android")
     return virtualMarkers.none { name.contains(it) || vendor.contains(it) }
   }
-
-  private fun sessionFields(probe: String, error: String?): Map<String, Any> = mapOf(
-    "sessionProbe" to probe,
-    "sessionError" to (error ?: ""),
-  )
 
   private fun availabilityFields(
     availability: String,
