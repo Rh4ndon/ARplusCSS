@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { ARRj45Scene } from '../ar/rj45/ARRj45Scene';
+import { ARAvailabilityGate } from '../components/ARAvailabilityGate';
 import { colors } from '../theme/colors';
 import { deleteMarkerImages } from '../utils/markerStorage';
 
@@ -16,13 +17,15 @@ export function ARNetworkScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      <ARRj45Scene
-        wiringType={wiringType}
-        markerUri={markerUri}
-        markerPhysicalWidth={markerPhysicalWidth}
-        markerTargetName={markerTargetName}
-        onExit={() => navigation.goBack()}
-      />
+      <ARAvailabilityGate onExit={() => navigation.goBack()}>
+        <ARRj45Scene
+          wiringType={wiringType}
+          markerUri={markerUri}
+          markerPhysicalWidth={markerPhysicalWidth}
+          markerTargetName={markerTargetName}
+          onExit={() => navigation.goBack()}
+        />
+      </ARAvailabilityGate>
     </View>
   );
 }

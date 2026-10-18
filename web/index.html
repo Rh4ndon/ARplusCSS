@@ -90,6 +90,25 @@
     .btn-primary { background: var(--blue); color: #fff; }
     .btn-ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,0.6); }
     .btn-row { display: flex; flex-wrap: wrap; gap: 14px; }
+    .qr-link {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-top: 28px;
+      width: fit-content;
+    }
+    .qr-link img {
+      width: 120px;
+      height: 120px;
+      border-radius: 12px;
+      background: #fff;
+      padding: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      transition: transform 0.15s ease;
+    }
+    .qr-link:hover img { transform: scale(1.05); }
+    .qr-link span { color: #dbeafe; font-size: 13px; font-weight: 600; }
 
     /* ── Sections ───────────────────────────────────────── */
     section { padding: 56px 0; }
@@ -184,6 +203,7 @@
       .hero h1 { font-size: 30px; }
       .steps { grid-template-columns: 1fr; }
       .nav-links { display: none; }
+      .qr-link { display: flex; margin: 28px auto 0; }
     }
   </style>
 </head>
@@ -218,6 +238,10 @@
           <a href="#downloads" class="btn btn-primary">Download the app</a>
           <a href="ARplusCSS_User_Manual.pdf" class="btn btn-ghost">User manual</a>
         </div>
+        <a class="qr-link" href="https://betadrop.app/i/BcGwJw" aria-label="Scan QR code to download the ARplusCSS app">
+          <img src="assets/arpluscss.png" alt="QR code to download the ARplusCSS app" />
+          <span>Scan to download the app</span>
+        </a>
       </div>
       <img class="hero-img" src="assets/home-hero.png" alt="ARplusCSS in action" />
     </div>

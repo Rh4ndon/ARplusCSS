@@ -1,0 +1,7 @@
+{
+  "name": "ar-availability",
+  "version": "1.0.0",
+  "description": "Safe ARCore availability probe for ARplusCSS",
+  "main": "index.js",
+  "private": true
+}

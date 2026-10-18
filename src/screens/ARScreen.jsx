@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { ARMotherboardScene } from '../ar/ARMotherboardScene';
+import { ARAvailabilityGate } from '../components/ARAvailabilityGate';
 import { clearBoardState } from '../utils/boardStateStorage';
 import { colors } from '../theme/colors';
 
@@ -17,11 +18,13 @@ export function ARScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      <ARMotherboardScene
-        onExit={handleExit}
-        markerUri={markerUri}
-        markerPhysicalWidth={markerPhysicalWidth}
-      />
+      <ARAvailabilityGate onExit={handleExit}>
+        <ARMotherboardScene
+          onExit={handleExit}
+          markerUri={markerUri}
+          markerPhysicalWidth={markerPhysicalWidth}
+        />
+      </ARAvailabilityGate>
     </View>
   );
 }
