@@ -18,7 +18,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.arpluscss.app",
+      "bundleIdentifier": "com.arcss.app",
       "infoPlist": {
         "NSCameraUsageDescription": "ARplusCSS uses the camera to scan your motherboard reference image and show interactive AR guides.",
         "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photos",
@@ -27,7 +27,7 @@
       }
     },
     "android": {
-      "package": "com.arpluscss.app",
+      "package": "com.arcss.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0047AB"

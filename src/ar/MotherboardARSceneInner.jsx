@@ -266,6 +266,9 @@ export function MotherboardARSceneInner() {
   const [boardLocked, setBoardLocked] = useState(
     () => getARSceneState().boardLocked,
   );
+  const [componentPreviewSlot, setComponentPreviewSlot] = useState(
+    () => getARSceneState().componentPreviewSlot,
+  );
   const snappedRef = useRef(false);
   const dragPosRef = useRef(null);
   const handledControlRef = useRef(null);
@@ -281,6 +284,7 @@ export function MotherboardARSceneInner() {
         setPlacementControl(s.placementControl);
         if (s.boardAlign) setBoardAlign(s.boardAlign);
         setBoardLocked(!!s.boardLocked);
+        setComponentPreviewSlot(s.componentPreviewSlot ?? null);
       }),
     [],
   );
@@ -435,7 +439,8 @@ export function MotherboardARSceneInner() {
           const modelConfig = COMPONENT_MODELS[hotspot.id];
           const [w, h] = hotspot.size;
           const isIntendedTarget =
-            activeSlotId === hotspot.id && !installedSlots.includes(hotspot.id);
+            (activeSlotId === hotspot.id || componentPreviewSlot === hotspot.id)
+            && !installedSlots.includes(hotspot.id);
 
           if (installedSlots.includes(hotspot.id) && modelConfig) {
             return (

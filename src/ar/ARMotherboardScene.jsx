@@ -5,6 +5,7 @@ import { useVideoPlayer } from 'expo-video';
 import { MotherboardARSceneInner } from './MotherboardARSceneInner';
 import { registerMotherboardTrackingTarget } from './trackingTargets';
 import { componentGuides } from '../data/componentGuides';
+import { ComponentPreviewModal, componentImages } from '../components/ComponentPreviewModal';
 import { InstallGuidePanel } from '../components/InstallGuidePanel';
 import { MotherboardAlignPanel } from '../components/MotherboardAlignPanel';
 import { ARHud } from '../components/ARHud';
@@ -49,6 +50,7 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
   const [description, setDescription] = useState(motherboardDescription);
   const [statusLabel, setStatusLabel] = useState(defaultStatus);
   const [showInfo, setShowInfo] = useState(false);
+  const [showComponentPreview, setShowComponentPreview] = useState(false);
   const [installedSlots, setInstalledSlots] = useState([]);
   const [phase, setPhase] = useState('align');
   const lastComponentId = useRef(null);
@@ -101,7 +103,11 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
     return () => {
       cancelled = true;
       unsub();
-      patchARSceneState({ activeSlot: null, playInstallAnim: false });
+      patchARSceneState({
+        activeSlot: null,
+        playInstallAnim: false,
+        componentPreviewSlot: null,
+      });
     };
   }, []);
 
@@ -134,6 +140,8 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
   }, []);
 
   const handleSelectSlot = useCallback((slotId) => {
+    setShowComponentPreview(false);
+    patchARSceneState({ componentPreviewSlot: null });
     lastComponentId.current = slotId;
     const slotGuide = componentGuides[slotId];
     if (slotGuide) {
@@ -170,16 +178,26 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
       lastComponentId.current = next;
       setActiveSlot(null);
       setShowInfo(false);
+      setShowComponentPreview(false);
       patchARSceneState({
         activeSlot: null,
         playInstallAnim: false,
         placingSlot: next,
+        componentPreviewSlot: null,
       });
       setPhase('placing');
       return;
     }
     setPhase('guide');
+    const showPreview = !!componentImages[next];
+    setShowComponentPreview(showPreview);
+    patchARSceneState({ componentPreviewSlot: showPreview ? next : null });
   }, [installedSlots, handleSelectSlot]);
+
+  const closeComponentPreview = useCallback(() => {
+    setShowComponentPreview(false);
+    patchARSceneState({ componentPreviewSlot: null });
+  }, []);
 
   const handleLockBoard = useCallback(() => {
     lockBoardAlign();
@@ -202,6 +220,7 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
     setInstalledSlots([]);
     setActiveSlot(null);
     setShowInfo(false);
+    setShowComponentPreview(false);
     setDescription(motherboardDescription);
     setStatusLabel('Position locked — tap Start');
     // Lesson reset keeps the locked board pose.
@@ -211,11 +230,13 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
       placingSlot: null,
       activeSlot: null,
       playInstallAnim: false,
+      componentPreviewSlot: null,
     });
   }, [phase]);
 
   const closeGuide = useCallback(() => {
     if (!activeSlot) return;
+    closeComponentPreview();
     const slot = activeSlot;
     setActiveSlot(null);
     setShowInfo(false);
@@ -229,7 +250,7 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
       });
       setPhase('placing');
     }
-  }, [activeSlot, installedSlots]);
+  }, [activeSlot, closeComponentPreview, installedSlots]);
 
   const reopenGuide = useCallback(() => {
     const slot = lastComponentId.current;
@@ -377,7 +398,13 @@ export function ARMotherboardScene({ onExit, markerUri, markerPhysicalWidth }) {
           </View>
         </View>
       </Modal>
-      {guide && (
+      {guide && showComponentPreview && (
+        <ComponentPreviewModal
+          guide={guide}
+          onExit={closeComponentPreview}
+        />
+      )}
+      {guide && !showComponentPreview && (
         <InstallGuidePanel
           guide={guide}
           onClose={closeGuide}

@@ -28,6 +28,7 @@ const state = {
   installError: null,
   installSuccess: null,
   placingSlot: null,
+  componentPreviewSlot: null,
   /** Command sent from the React Native placement controls to the AR scene. */
   placementControl: null,
   pendingModelLoads: 0,
